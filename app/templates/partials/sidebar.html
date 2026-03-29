@@ -1,0 +1,27 @@
+<aside class="sidebar">
+    <div class="brand-block">
+        <div class="brand-mark">AF</div>
+        <div class="brand-copy">
+            <div class="brand-title">AdFlow Admin Simulator</div>
+            <div class="brand-subtitle">GAM / DV360 Style Learning Dashboard</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        {% for section in sidebar_nav %}
+            {% if section.children %}
+            <div class="nav-group">
+                <div class="nav-group-title">{{ section.label }}</div>
+                {% for child in section.children %}
+                <a class="nav-link {% if request.endpoint == child.endpoint %}active{% endif %}" data-short="{{ child.label[:2]|upper }}" title="{{ child.label }}" href="{{ url_for(child.endpoint) }}">{{ child.label }}</a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <a class="nav-link {% if request.endpoint == section.endpoint %}active{% endif %}" data-short="{{ section.label[:2]|upper }}" title="{{ section.label }}" href="{{ url_for(section.endpoint) }}">{{ section.label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+        <div class="sidebar-footer-label">Workspace</div>
+        <div class="sidebar-footer-value">Local MySQL Training Stack</div>
+    </div>
+</aside>

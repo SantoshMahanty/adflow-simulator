@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header"><h2>{{ 'Create Issue' if mode == 'create' else 'Edit Issue' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Title</span><input type="text" name="title" value="{{ issue.title or '' }}" required></label>
+        <label><span>Severity</span><input type="text" name="severity" value="{{ issue.severity or '' }}" required></label>
+        <label><span>Category</span><input type="text" name="category" value="{{ issue.category or '' }}" required></label>
+        <label><span>Related Module</span><input type="text" name="related_module" value="{{ issue.related_module or '' }}" required></label>
+        <label class="full-span"><span>Symptoms</span><textarea name="symptoms" rows="4" required>{{ issue.symptoms or '' }}</textarea></label>
+        <label class="full-span"><span>Likely Causes</span><textarea name="likely_causes" rows="4" required>{{ issue.likely_causes or '' }}</textarea></label>
+        <label class="full-span"><span>Where to Check</span><textarea name="where_to_check" rows="4" required>{{ issue.where_to_check or '' }}</textarea></label>
+        <label class="full-span"><span>Recommended Fix</span><textarea name="recommended_fix" rows="4" required>{{ issue.recommended_fix or '' }}</textarea></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Issue</button>
+            <a class="secondary-button" href="{{ url_for('troubleshooting.issues') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

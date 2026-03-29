@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header"><h2>{{ 'Create Line Item' if mode == 'create' else 'Edit Line Item' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Name</span><input type="text" name="name" value="{{ line_item.name or '' }}" required></label>
+        <label>
+            <span>Advertiser</span>
+            <select name="advertiser_id" required>
+                <option value="">Select advertiser</option>
+                {% for advertiser in advertisers %}
+                <option value="{{ advertiser.id }}" {% if line_item.advertiser_id == advertiser.id %}selected{% endif %}>{{ advertiser.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Order</span>
+            <select name="order_id" required>
+                <option value="">Select order</option>
+                {% for order in orders %}
+                <option value="{{ order.id }}" {% if line_item.order_id == order.id %}selected{% endif %}>{{ order.name }} | {{ order.advertiser.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Type</span>
+            <select name="line_item_type">
+                {% for item_type in line_item_types %}
+                <option value="{{ item_type }}" {% if line_item.line_item_type == item_type %}selected{% endif %}>{{ item_type }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label><span>Priority</span><input type="number" name="priority" value="{{ line_item.priority or 2 }}" required></label>
+        <label><span>Start Date</span><input type="date" name="start_date" value="{{ line_item.start_date }}" required></label>
+        <label><span>End Date</span><input type="date" name="end_date" value="{{ line_item.end_date }}" required></label>
+        <label><span>Goal Impressions</span><input type="number" name="goal_impressions" value="{{ line_item.goal_impressions or 0 }}" required></label>
+        <label><span>Delivered Impressions</span><input type="number" name="delivered_impressions" value="{{ line_item.delivered_impressions or 0 }}" required></label>
+        <label><span>CPM</span><input type="number" step="0.01" name="cpm" value="{{ line_item.cpm or 0 }}" required></label>
+        <label><span>Frequency Cap</span><input type="number" name="frequency_cap" value="{{ line_item.frequency_cap or 0 }}"></label>
+        <label><span>Creative Size</span><input type="text" name="creative_size" value="{{ line_item.creative_size or '' }}" placeholder="300x250" required></label>
+        <label><span>Geo Targeting</span><input type="text" name="geo_targeting" value="{{ line_item.geo_targeting or '' }}" placeholder="delhi,mumbai"></label>
+        <label><span>Device Targeting</span><input type="text" name="device_targeting" value="{{ line_item.device_targeting or '' }}" placeholder="desktop,mobile"></label>
+        <label><span>Audience Targeting</span><input type="text" name="audience_targeting" value="{{ line_item.audience_targeting or '' }}" placeholder="sports_fans"></label>
+        <label><span>Content Category</span><input type="text" name="content_category" value="{{ (line_item.targeting_rules|selectattr('target_type', 'equalto', 'content_category')|map(attribute='target_value')|list|first) or '' }}" placeholder="sports"></label>
+        <label>
+            <span>Status</span>
+            <select name="status">
+                {% for status in statuses %}
+                <option value="{{ status }}" {% if line_item.status == status %}selected{% endif %}>{{ status.title() }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span">
+            <span>Ad Unit Targeting</span>
+            <select name="ad_unit_paths" multiple size="5">
+                {% set selected_ad_units = line_item.targeting_rules|selectattr('target_type', 'equalto', 'ad_unit')|map(attribute='target_value')|list %}
+                {% for ad_unit in ad_units %}
+                <option value="{{ ad_unit.path }}" {% if ad_unit.path in selected_ad_units %}selected{% endif %}>{{ ad_unit.path }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span">
+            <span>Required Key Values</span>
+            <select name="key_value_value_ids" multiple size="6">
+                {% set selected_values = line_item.targeting_rules|selectattr('target_type', 'equalto', 'key_value')|map(attribute='key_value_value_id')|list %}
+                {% for value in key_value_values %}
+                <option value="{{ value.id }}" {% if value.id in selected_values %}selected{% endif %}>{{ value.key.name }}={{ value.value }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span"><span>Notes</span><textarea name="notes" rows="5">{{ line_item.notes or '' }}</textarea></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Line Item</button>
+            <a class="secondary-button" href="{{ url_for('line_items.index') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

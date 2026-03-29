@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <div class="page-intro-kicker">Workspace Overview</div>
+        <h2>Ad operations control center</h2>
+        <p>Monitor delivery health, review recent auction outcomes, and jump directly into setup or troubleshooting workflows.</p>
+    </div>
+    <div class="page-intro-meta">
+        <span class="metric-pill healthy">Serving Stack Active</span>
+        <span class="metric-pill neutral">Training Mode</span>
+    </div>
+</section>
+{% set cards = dashboard.kpis %}
+{% include "partials/stat_cards.html" %}
+
+<section class="panel-row">
+    <article class="panel hero-panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Operations Snapshot</div>
+                <h2>Delivery Health Summary</h2>
+            </div>
+            <div class="chip-row">
+                <span class="metric-pill healthy">Healthy {{ dashboard.delivery_summary.healthy }}</span>
+                <span class="metric-pill warning">At Risk {{ dashboard.delivery_summary.at_risk }}</span>
+                <span class="metric-pill neutral">Paused {{ dashboard.delivery_summary.paused }}</span>
+            </div>
+        </div>
+        <div class="chart" data-chart="bar" data-series='{{ dashboard.issue_breakdown|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Shortcuts</div>
+                <h2>Quick Actions</h2>
+            </div>
+        </div>
+        <div class="action-grid">
+            <a class="action-card" href="{{ url_for('advertisers.create') }}">Create Advertiser</a>
+            <a class="action-card" href="{{ url_for('line_items.create') }}">Create Line Item</a>
+            <a class="action-card" href="{{ url_for('simulator.index') }}">Run Auction Simulation</a>
+            <a class="action-card" href="{{ url_for('troubleshooting.create_issue') }}">Add Troubleshooting Issue</a>
+        </div>
+        <div class="chart-note">
+            Issue severity breakdown and recent auction winners are rendered with plain JavaScript components.
+        </div>
+    </article>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Monitoring</div><h2>Issue Breakdown</h2></div></div>
+        <div class="chart" data-chart="donut" data-series='{{ dashboard.issue_breakdown|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Auctioning</div><h2>Auction Results</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ dashboard.auction_chart|tojson }}'></div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Audit Trail</div>
+            <h2>Recent Activity</h2>
+        </div>
+    </div>
+    <div class="table-wrap table-scroll">
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Entity</th>
+                    <th>Action</th>
+                    <th>Message</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in dashboard.recent_activity %}
+                <tr>
+                    <td>{{ item.entity_type }}</td>
+                    <td>{{ item.action }}</td>
+                    <td>{{ item.message }}</td>
+                    <td>{{ item.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-state">No recent activity yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

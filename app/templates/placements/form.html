@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel narrow">
+    <div class="panel-header"><h2>{{ 'Create Placement' if mode == 'create' else 'Edit Placement' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Placement Name</span><input type="text" name="name" value="{{ placement.name or '' }}" required></label>
+        <label><span>Device Type</span><input type="text" name="device_type" value="{{ placement.device_type or '' }}" required></label>
+        <label><span>Format</span><input type="text" name="placement_format" value="{{ placement.placement_format or '' }}" required></label>
+        <label class="full-span">
+            <span>Linked Ad Units</span>
+            <select name="ad_unit_ids" multiple size="6">
+                {% set selected = placement.ad_units | map(attribute='id') | list %}
+                {% for ad_unit in ad_units %}
+                <option value="{{ ad_unit.id }}" {% if ad_unit.id in selected %}selected{% endif %}>{{ ad_unit.path }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span"><span>Notes</span><textarea name="notes" rows="4">{{ placement.notes or '' }}</textarea></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Placement</button>
+            <a class="secondary-button" href="{{ url_for('placements.index') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

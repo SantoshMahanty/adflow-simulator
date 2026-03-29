@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title or "AdFlow Admin Simulator" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="{% if g.user %}app-page{% else %}auth-page{% endif %}">
+    {% if g.user %}
+    <div class="app-shell">
+        {% include "partials/sidebar.html" %}
+        <div class="app-main">
+            {% include "partials/topbar.html" %}
+            <main class="content-area">
+                {% include "partials/flashes.html" %}
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+    <div class="modal-backdrop" data-modal-backdrop aria-hidden="true">
+        <div class="app-modal" role="dialog" aria-modal="true" aria-labelledby="platform-guide-title">
+            <button type="button" class="modal-close" data-modal-close aria-label="Close guide">X</button>
+            <div class="modal-kicker">Platform Guide</div>
+            <h2 id="platform-guide-title">How to use this learning console</h2>
+            <div class="modal-grid">
+                <div>
+                    <h3>Inventory</h3>
+                    <p>Model advertisers, orders, line items, creatives, ad units, placements, and targeting relationships like a simplified GAM setup.</p>
+                </div>
+                <div>
+                    <h3>Simulations</h3>
+                    <p>Run waterfall or unified auction tests against realistic request context and review eligibility, rejection causes, and winners.</p>
+                </div>
+                <div>
+                    <h3>Troubleshooting</h3>
+                    <p>Use the issue library for diagnosis patterns and the sheet page as an internal ad-ops tracker with export support.</p>
+                </div>
+                <div>
+                    <h3>Reports</h3>
+                    <p>Review delivery health, issue mix, advertiser activity, and common failure reasons using lightweight JS charts.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <main class="auth-shell">
+        {% include "partials/flashes.html" %}
+        {% block auth_content %}{% endblock %}
+    </main>
+    {% endif %}
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

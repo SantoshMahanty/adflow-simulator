@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-intro compact">
+    <div>
+        <div class="page-intro-kicker">Targeting Configuration</div>
+        <h2>Key-value setup explorer</h2>
+        <p>Browse targeting keys on the left, inspect values on the right, and trace which line items rely on each rule.</p>
+    </div>
+</section>
+<section class="two-pane-layout">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Navigation</div><h2>Keys</h2></div></div>
+        <form method="get" class="filter-bar">
+            <input type="search" name="q" value="{{ filters.q }}" placeholder="Search keys">
+            <button class="secondary-button" type="submit">Search</button>
+        </form>
+        <div class="list-stack">
+            {% for key in keys %}
+            <a class="list-item {% if selected_key and selected_key.id == key.id %}active{% endif %}" href="{{ url_for('key_values.index', key_id=key.id) }}">{{ key.name }}</a>
+            {% else %}
+            <div class="empty-state">No keys found.</div>
+            {% endfor %}
+        </div>
+        <form method="post" action="{{ url_for('key_values.create_key') }}" class="inline-form">
+            <input type="text" name="name" placeholder="New key name" required>
+            <input type="text" name="description" placeholder="Description">
+            <button class="primary-button" type="submit">Create Key</button>
+        </form>
+    </article>
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Value Matrix</div>
+                <h2>{{ selected_key.name if selected_key else 'Values' }}</h2>
+            </div>
+        </div>
+        {% if selected_key %}
+        <div class="key-value-summary">
+            <div class="setting-card">
+                <span class="setting-label">Selected Key</span>
+                <strong>{{ selected_key.name }}</strong>
+            </div>
+            <div class="setting-card">
+                <span class="setting-label">Values</span>
+                <strong>{{ selected_key.values|length }}</strong>
+            </div>
+            <div class="setting-card">
+                <span class="setting-label">Mapped Rules</span>
+                <strong>{{ related_line_items|length }}</strong>
+            </div>
+        </div>
+        <div class="table-wrap table-scroll">
+            <table class="data-table compact">
+                <thead><tr><th>Value</th><th>Description</th><th>Related Line Items</th></tr></thead>
+                <tbody>
+                    {% for value in selected_key.values %}
+                    <tr>
+                        <td>{{ value.value }}</td>
+                        <td>{{ value.description }}</td>
+                        <td>
+                            {% set matches = related_line_items | selectattr('key_value_value_id', 'equalto', value.id) | list %}
+                            {% for match in matches %}
+                                <a href="{{ url_for('line_items.detail', line_item_id=match.line_item.id) }}">{{ match.line_item.name }}</a>{% if not loop.last %}, {% endif %}
+                            {% else %}
+                                No line items assigned
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="3" class="empty-state">No values for this key.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <form method="post" action="{{ url_for('key_values.create_value') }}" class="inline-form">
+            <input type="hidden" name="key_id" value="{{ selected_key.id }}">
+            <input type="text" name="value" placeholder="New value" required>
+            <input type="text" name="description" placeholder="Description">
+            <button class="primary-button" type="submit">Add Value</button>
+        </form>
+        {% else %}
+        <div class="empty-state">Create a key to begin mapping targeting values and linking them to line item rules.</div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

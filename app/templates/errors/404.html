@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<section class="login-panel">
+    <div class="login-card">
+        <div class="login-brand">404</div>
+        <h1>Page not found</h1>
+        <p>The page you requested does not exist in this workspace.</p>
+        <a class="primary-button full-width" href="{{ url_for('dashboard.index') if g.user else url_for('auth.login') }}">Go Back</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<section class="panel narrow">
+    <div class="panel-header"><h2>Page not found</h2></div>
+    <p>The page you requested does not exist in this workspace.</p>
+</section>
+{% endblock %}

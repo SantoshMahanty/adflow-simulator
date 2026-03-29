@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel narrow">
+    <div class="panel-header"><h2>{{ 'Create Ad Unit' if mode == 'create' else 'Edit Ad Unit' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Name</span><input type="text" name="name" value="{{ ad_unit.name or '' }}" required></label>
+        <label><span>Path</span><input type="text" name="path" value="{{ ad_unit.path or '' }}" placeholder="/sports/homepage/top_banner" required></label>
+        <label><span>Size Support</span><input type="text" name="size_support" value="{{ ad_unit.size_support or '' }}" placeholder="728x90,300x250" required></label>
+        <label><span>Environment</span><input type="text" name="environment" value="{{ ad_unit.environment or '' }}" placeholder="web" required></label>
+        <label>
+            <span>Parent</span>
+            <select name="parent_id">
+                <option value="">No parent</option>
+                {% for parent in parents %}
+                <option value="{{ parent.id }}" {% if ad_unit.parent_id == parent.id %}selected{% endif %}>{{ parent.path }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="checkbox-row"><input type="checkbox" name="is_active" {% if ad_unit.is_active %}checked{% endif %}><span>Active ad unit</span></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Ad Unit</button>
+            <a class="secondary-button" href="{{ url_for('ad_units.index') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

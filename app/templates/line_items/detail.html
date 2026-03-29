@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <div class="panel-kicker">Line Item Detail</div>
+        <h2>{{ line_item.name }}</h2>
+        <p>{{ line_item.order.name }} | {{ line_item.advertiser.name }} | {{ line_item.line_item_type }}</p>
+    </div>
+    <div class="detail-actions">
+        {{ status_chip(line_item.status) }}
+        <a class="primary-button" href="{{ url_for('line_items.edit', line_item_id=line_item.id) }}">Edit Line Item</a>
+    </div>
+</section>
+
+<section class="detail-stat-grid">
+    <article class="detail-stat-card">
+        <span class="setting-label">Priority Tier</span>
+        <strong>{{ line_item.priority }}</strong>
+        <p>{{ line_item.line_item_type }}</p>
+    </article>
+    <article class="detail-stat-card">
+        <span class="setting-label">Flight Window</span>
+        <strong>{{ line_item.start_date }}</strong>
+        <p>to {{ line_item.end_date }}</p>
+    </article>
+    <article class="detail-stat-card">
+        <span class="setting-label">Frequency Cap</span>
+        <strong>{{ line_item.frequency_cap }}</strong>
+        <p>per user</p>
+    </article>
+    <article class="detail-stat-card">
+        <span class="setting-label">Creative Size</span>
+        <strong>{{ line_item.creative_size }}</strong>
+        <p>requested slot match</p>
+    </article>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Performance</div><h2>Delivery Snapshot</h2></div></div>
+        <div class="summary-grid">
+            <div><span class="setting-label">Goal</span><strong>{{ "{:,}".format(line_item.goal_impressions) }}</strong></div>
+            <div><span class="setting-label">Delivered</span><strong>{{ "{:,}".format(line_item.delivered_impressions) }}</strong></div>
+            <div><span class="setting-label">Delivery %</span><strong>{{ line_item.delivery_percent }}%</strong></div>
+            <div><span class="setting-label">CPM</span><strong>{{ line_item.cpm }}</strong></div>
+        </div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Decisioning</div><h2>Eligibility Logic Result</h2></div></div>
+        <ul class="check-list">
+            {% for check in evaluation.checks %}
+            <li class="{{ 'pass' if check.passed else 'fail' }}">{{ check.label }}: {{ 'Pass' if check.passed else check.message }}</li>
+            {% endfor %}
+        </ul>
+    </article>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Creative Attachments</div><h2>Linked Creatives</h2></div></div>
+        <div class="table-wrap table-scroll">
+            <table class="data-table compact">
+                <thead><tr><th>Name</th><th>Format</th><th>Size</th><th>Status</th><th>Active</th></tr></thead>
+                <tbody>
+                    {% for creative in line_item.creatives %}
+                    <tr>
+                        <td>{{ creative.name }}</td>
+                        <td>{{ creative.creative_format }}</td>
+                        <td>{{ creative.size }}</td>
+                        <td>{{ status_chip(creative.approval_status) }}</td>
+                        <td>{{ 'Yes' if creative.is_active else 'No' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="empty-state">No creatives linked.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Targeting Setup</div><h2>Targeting Rules</h2></div></div>
+        <div class="chip-row">
+            <span class="metric-pill neutral">Geo {{ line_item.geo_targeting or 'Open' }}</span>
+            <span class="metric-pill neutral">Device {{ line_item.device_targeting or 'Open' }}</span>
+            <span class="metric-pill neutral">Audience {{ line_item.audience_targeting or 'Open' }}</span>
+            {% for rule in line_item.targeting_rules %}
+            <span class="metric-pill">{{ rule.display_label }}</span>
+            {% endfor %}
+        </div>
+        <div class="detail-box">
+            <strong>Request Context</strong>
+            <pre>{{ request_context|tojson(indent=2) }}</pre>
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header"><div><div class="panel-kicker">Debug Recommendations</div><h2>Troubleshooting Hints</h2></div></div>
+    <ul class="hint-list">
+        {% for hint in evaluation.hints %}
+        <li>{{ hint }}</li>
+        {% else %}
+        <li>All core eligibility checks are passing for the current reference request.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}

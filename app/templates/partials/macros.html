@@ -1,0 +1,3 @@
+{% macro status_chip(value) -%}
+<span class="status-chip {{ value|lower|replace(' ', '-')|replace('_', '-') }}">{{ value }}</span>
+{%- endmacro %}

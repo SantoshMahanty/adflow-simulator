@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Request Context</div>
+            <h2>Auction Simulator</h2>
+        </div>
+    </div>
+    <form method="post" class="form-grid">
+        <label>
+            <span>Simulation Mode</span>
+            <select name="mode">
+                <option value="Waterfall" {% if selected_mode == 'Waterfall' %}selected{% endif %}>Waterfall</option>
+                <option value="Unified Auction" {% if selected_mode == 'Unified Auction' %}selected{% endif %}>Unified Auction</option>
+            </select>
+        </label>
+        <label>
+            <span>Ad Unit</span>
+            <select name="ad_unit_id" required>
+                <option value="">Select ad unit</option>
+                {% for ad_unit in ad_units %}
+                <option value="{{ ad_unit.id }}" {% if request_context and request_context.ad_unit_id == ad_unit.id %}selected{% endif %}>{{ ad_unit.path }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label><span>Device</span><input type="text" name="device" value="{{ request_context.device if request_context else '' }}" placeholder="desktop"></label>
+        <label><span>Geo</span><input type="text" name="geo" value="{{ request_context.geo if request_context else '' }}" placeholder="delhi"></label>
+        <label><span>Audience</span><input type="text" name="audience" value="{{ request_context.audience if request_context else '' }}" placeholder="sports_fans"></label>
+        <label><span>Creative Size</span><input type="text" name="creative_size" value="{{ request_context.creative_size if request_context else '' }}" placeholder="728x90" required></label>
+        <label><span>Time / Date</span><input type="datetime-local" name="request_time" value="{{ request_context.time if request_context else '' }}"></label>
+        <label><span>Content Category</span><input type="text" name="content_category" value="{{ request_context.content_category if request_context else '' }}" placeholder="sports"></label>
+        <label class="full-span"><span>Key Values</span><textarea name="key_values" rows="4" placeholder="geo=delhi&#10;device=desktop&#10;content_category=sports">{% if request_context and request_context.key_values %}{% for key, value in request_context.key_values.items() %}{{ key }}={{ value }}
+{% endfor %}{% endif %}</textarea></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Run Simulation</button>
+        </div>
+    </form>
+</section>
+
+{% if result %}
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Candidate Review</div><h2>Eligible Demand</h2></div></div>
+        <div class="table-wrap table-scroll table-dense">
+            <table class="data-table compact">
+                <thead><tr><th>Line Item</th><th>Type</th><th>Priority</th><th>CPM</th><th>Targeting</th><th>Date</th><th>Status</th><th>Eligible</th><th>Reason</th></tr></thead>
+                <tbody>
+                    {% for candidate in result.candidates %}
+                    <tr>
+                        <td>{{ candidate.name }}</td>
+                        <td>{{ candidate.type }}</td>
+                        <td>{{ candidate.priority }}</td>
+                        <td>{{ candidate.cpm }}</td>
+                        <td>{{ candidate.targeting_match }}</td>
+                        <td>{{ candidate.date_match }}</td>
+                        <td>{{ candidate.status_match }}</td>
+                        <td>{{ status_chip('active' if candidate.eligible else 'rejected') }}</td>
+                        <td>{{ candidate.rejection_reason or 'Eligible' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Outcome</div><h2>{{ result.mode }} Result</h2></div></div>
+        <div class="winner-card">
+            <div class="winner-label">Winner</div>
+            <div class="winner-name">{{ result.winner.name if result.winner else 'No winner' }}</div>
+            <p>{{ result.why_winner_won if result.why_winner_won else 'Highest priority eligible line item won the waterfall.' }}</p>
+        </div>
+        {% if result.steps %}
+        <div class="timeline">
+            {% for step in result.steps %}
+            <div class="timeline-item">
+                <strong>Step {{ step.step }}</strong>
+                <span>{{ step.line_item }} | {{ step.decision }}</span>
+                <p>{{ step.reason }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </article>
+</section>
+{% endif %}
+
+<section class="panel">
+    <div class="panel-header"><div><div class="panel-kicker">History</div><h2>Recent Simulations</h2></div></div>
+    <div class="table-wrap table-scroll">
+        <table class="data-table compact">
+            <thead><tr><th>ID</th><th>Mode</th><th>Ad Unit</th><th>Winner</th><th>Created</th></tr></thead>
+            <tbody>
+                {% for simulation in recent_simulations %}
+                <tr>
+                    <td><a href="{{ url_for('simulator.detail', simulation_id=simulation.id) }}">#{{ simulation.id }}</a></td>
+                    <td>{{ simulation.mode }}</td>
+                    <td>{{ simulation.ad_unit.path if simulation.ad_unit else 'N/A' }}</td>
+                    <td>{{ simulation.winner_line_item.name if simulation.winner_line_item else 'No winner' }}</td>
+                    <td>{{ simulation.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="empty-state">No simulations saved yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

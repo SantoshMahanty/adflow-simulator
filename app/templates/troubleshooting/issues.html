@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Issues Library</h2>
+        <a class="primary-button" href="{{ url_for('troubleshooting.create_issue') }}">Add Issue</a>
+    </div>
+    <form method="get" class="filter-bar">
+        <input type="search" name="q" value="{{ filters.q }}" placeholder="Search issue title">
+        <input type="text" name="severity" value="{{ filters.severity }}" placeholder="Severity">
+        <input type="text" name="category" value="{{ filters.category }}" placeholder="Category">
+        <button class="secondary-button" type="submit">Filter</button>
+    </form>
+    <div class="card-stack">
+        {% for issue in issues %}
+        <article class="knowledge-card">
+            <div class="knowledge-head">
+                <div>
+                    <h3>{{ issue.title }}</h3>
+                    <div class="chip-row">
+                        {{ status_chip(issue.severity) }}
+                        <span class="metric-pill">{{ issue.category }}</span>
+                        <span class="metric-pill">{{ issue.related_module }}</span>
+                    </div>
+                </div>
+                <div class="row-actions">
+                    <a href="{{ url_for('troubleshooting.edit_issue', issue_id=issue.id) }}">Edit</a>
+                    <form method="post" action="{{ url_for('troubleshooting.delete_issue', issue_id=issue.id) }}"><button type="submit" class="danger-link">Delete</button></form>
+                </div>
+            </div>
+            <div class="knowledge-grid">
+                <div><strong>Symptoms</strong><p>{{ issue.symptoms }}</p></div>
+                <div><strong>Likely Causes</strong><p>{{ issue.likely_causes }}</p></div>
+                <div><strong>Where to Check</strong><p>{{ issue.where_to_check }}</p></div>
+                <div><strong>Recommended Fix</strong><p>{{ issue.recommended_fix }}</p></div>
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state">No troubleshooting issues found. Add a knowledge-base entry to document a serving failure pattern.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

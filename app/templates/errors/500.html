@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<section class="login-panel">
+    <div class="login-card">
+        <div class="login-brand">500</div>
+        <h1>Something went wrong</h1>
+        <p>The application hit a server-side error. Database changes were rolled back safely.</p>
+        <a class="primary-button full-width" href="{{ url_for('dashboard.index') if g.user else url_for('auth.login') }}">Return to safety</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<section class="panel narrow">
+    <div class="panel-header"><h2>Server error</h2></div>
+    <p>The application hit a server-side error. Database changes were rolled back safely.</p>
+</section>
+{% endblock %}

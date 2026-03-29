@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block auth_content %}
+<section class="login-panel">
+    <div class="login-card login-card-wide">
+        <div class="login-showcase">
+            <div class="login-brand">AdFlow Admin Simulator</div>
+            <h1>Sign in to the ad serving dashboard</h1>
+            <p>Use the seeded admin account to explore the GAM / DV360 style learning environment.</p>
+            <div class="login-feature-list">
+                <div class="login-feature-item">
+                    <strong>Inventory setup</strong>
+                    <span>Advertisers, orders, line items, creatives, ad units, and placements.</span>
+                </div>
+                <div class="login-feature-item">
+                    <strong>Auction logic</strong>
+                    <span>Practice waterfall evaluation and unified auction comparison.</span>
+                </div>
+                <div class="login-feature-item">
+                    <strong>Troubleshooting ops</strong>
+                    <span>Review issue patterns, tracker rows, and reporting summaries.</span>
+                </div>
+            </div>
+        </div>
+        <div class="login-form-panel">
+        <form method="post" class="form-grid">
+            <label>
+                <span>Email</span>
+                <input type="email" name="email" placeholder="admin@adflow.local" required>
+            </label>
+            <label>
+                <span>Password</span>
+                <input type="password" name="password" placeholder="Enter password" required>
+            </label>
+            <button class="primary-button full-width" type="submit">Sign In</button>
+        </form>
+        <div class="login-footnote">
+            Default login after seeding: <strong>admin@adflow.local</strong> / <strong>Admin@123</strong>
+        </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <h2>Simulation #{{ simulation.id }}</h2>
+        <p>{{ simulation.mode }} | {{ simulation.created_at.strftime('%d %b %Y %H:%M') }}</p>
+    </div>
+    <a class="secondary-button" href="{{ url_for('simulator.index') }}">Back to Simulator</a>
+</section>
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><h2>Request Context</h2></div>
+        <pre>{{ simulation.request_context|tojson(indent=2) }}</pre>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><h2>Winner</h2></div>
+        <div class="winner-name">{{ result.winner.name if result.winner else 'No winner' }}</div>
+        <p>{{ result.why_winner_won if result.why_winner_won else 'Waterfall winner selected from the first eligible step.' }}</p>
+    </article>
+</section>
+{% endblock %}

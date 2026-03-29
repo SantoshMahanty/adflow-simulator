@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header"><h2>{{ 'Create Sheet Row' if mode == 'create' else 'Edit Sheet Row' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Issue Title</span><input type="text" name="issue_title" value="{{ row.issue_title or '' }}" required></label>
+        <label>
+            <span>Line Item</span>
+            <select name="line_item_id">
+                <option value="">Optional</option>
+                {% for item in line_items %}
+                <option value="{{ item.id }}" {% if row.line_item_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label><span>Campaign Name</span><input type="text" name="campaign_name" value="{{ row.campaign_name or '' }}" required></label>
+        <label><span>Severity</span><input type="text" name="severity" value="{{ row.severity or '' }}" required></label>
+        <label><span>Owner</span><input type="text" name="owner" value="{{ row.owner or '' }}" required></label>
+        <label><span>Due Date</span><input type="date" name="due_date" value="{{ row.due_date }}"></label>
+        <label><span>Status</span><input type="text" name="status" value="{{ row.status or '' }}" required></label>
+        <label class="full-span"><span>Problem</span><textarea name="problem" rows="3" required>{{ row.problem or '' }}</textarea></label>
+        <label class="full-span"><span>Possible Reason</span><textarea name="possible_reason" rows="3" required>{{ row.possible_reason or '' }}</textarea></label>
+        <label class="full-span"><span>Where to Check</span><textarea name="where_to_check" rows="3" required>{{ row.where_to_check or '' }}</textarea></label>
+        <label class="full-span"><span>Suggested Fix</span><textarea name="suggested_fix" rows="3" required>{{ row.suggested_fix or '' }}</textarea></label>
+        <label class="full-span"><span>Notes</span><textarea name="notes" rows="3">{{ row.notes or '' }}</textarea></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Sheet Row</button>
+            <a class="secondary-button" href="{{ url_for('troubleshooting.sheet') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <h2>{{ order.name }}</h2>
+        <p>{{ order.advertiser.name }} | {{ order.start_date }} to {{ order.end_date }}</p>
+    </div>
+    <div>{{ status_chip(order.status) }}</div>
+</section>
+<section class="panel">
+    <div class="panel-header"><h2>Associated Line Items</h2></div>
+    <div class="table-wrap">
+        <table class="data-table compact">
+            <thead><tr><th>Line Item</th><th>Type</th><th>CPM</th><th>Goal</th><th>Delivered</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for line_item in order.line_items %}
+                <tr>
+                    <td><a href="{{ url_for('line_items.detail', line_item_id=line_item.id) }}">{{ line_item.name }}</a></td>
+                    <td>{{ line_item.line_item_type }}</td>
+                    <td>{{ line_item.cpm }}</td>
+                    <td>{{ line_item.goal_impressions }}</td>
+                    <td>{{ line_item.delivered_impressions }}</td>
+                    <td>{{ status_chip(line_item.status) }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No line items attached yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

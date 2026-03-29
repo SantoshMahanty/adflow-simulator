@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <h2>{{ advertiser.name }}</h2>
+        <p>{{ advertiser.vertical }} advertiser</p>
+    </div>
+    <div>{{ status_chip(advertiser.status) }}</div>
+</section>
+<section class="panel">
+    <div class="panel-header"><h2>Linked Orders</h2></div>
+    <div class="table-wrap">
+        <table class="data-table compact">
+            <thead><tr><th>Order</th><th>Flight</th><th>Status</th><th>Line Items</th></tr></thead>
+            <tbody>
+                {% for order in advertiser.orders %}
+                <tr>
+                    <td><a href="{{ url_for('orders.detail', order_id=order.id) }}">{{ order.name }}</a></td>
+                    <td>{{ order.start_date }} to {{ order.end_date }}</td>
+                    <td>{{ status_chip(order.status) }}</td>
+                    <td>{{ order.line_items|length }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="empty-state">No linked orders found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

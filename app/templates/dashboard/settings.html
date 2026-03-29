@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Environment Summary</h2>
+    </div>
+    <div class="settings-grid">
+        <div class="setting-card">
+            <span class="setting-label">Users</span>
+            <strong>{{ settings_summary.users }}</strong>
+        </div>
+        <div class="setting-card">
+            <span class="setting-label">Placements</span>
+            <strong>{{ settings_summary.placements }}</strong>
+        </div>
+        <div class="setting-card">
+            <span class="setting-label">Key Value Keys</span>
+            <strong>{{ settings_summary.key_value_keys }}</strong>
+        </div>
+    </div>
+</section>
+{% endblock %}

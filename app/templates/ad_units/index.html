@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% macro tree(nodes, depth=0) -%}
+    {% for node in nodes %}
+    <div class="tree-node" style="margin-left: {{ depth * 16 }}px">
+        <span class="tree-path">{{ node.path }}</span>
+        <span class="muted">{{ node.size_support }} | {{ node.environment }}</span>
+    </div>
+    {{ tree(node.children, depth + 1) }}
+    {% endfor %}
+{%- endmacro %}
+
+{% block content %}
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header">
+            <h2>Hierarchy</h2>
+            <a class="primary-button" href="{{ url_for('ad_units.create') }}">Add Ad Unit</a>
+        </div>
+        <div class="tree-wrap">{{ tree(parent_tree) }}</div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><h2>Ad Unit Inventory</h2></div>
+        <div class="table-wrap">
+            <table class="data-table compact">
+                <thead><tr><th>Name</th><th>Path</th><th>Size Support</th><th>Environment</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                    {% for ad_unit in ad_units %}
+                    <tr>
+                        <td>{{ ad_unit.name }}</td>
+                        <td>{{ ad_unit.path }}</td>
+                        <td>{{ ad_unit.size_support }}</td>
+                        <td>{{ ad_unit.environment }}</td>
+                        <td>{{ status_chip('active' if ad_unit.is_active else 'paused') }}</td>
+                        <td class="row-actions">
+                            <a href="{{ url_for('ad_units.edit', ad_unit_id=ad_unit.id) }}">Edit</a>
+                            <form method="post" action="{{ url_for('ad_units.delete', ad_unit_id=ad_unit.id) }}"><button type="submit" class="danger-link">Delete</button></form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="empty-state">No ad units found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </article>
+</section>
+{% endblock %}

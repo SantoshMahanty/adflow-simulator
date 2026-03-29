@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-intro">
+    <div>
+        <div class="page-intro-kicker">Reporting Workspace</div>
+        <h2>Delivery and troubleshooting analytics</h2>
+        <p>Use the reporting layer to understand campaign health, failure patterns, and which advertisers are driving the most operational activity.</p>
+    </div>
+    <div class="page-intro-meta">
+        <span class="metric-pill healthy">Live Rollup</span>
+        <span class="metric-pill neutral">Seeded Metrics</span>
+    </div>
+</section>
+{% set cards = [
+    {'label': 'Advertisers', 'value': reports.totals.advertisers},
+    {'label': 'Orders', 'value': reports.totals.orders},
+    {'label': 'Line Items', 'value': reports.totals.line_items},
+    {'label': 'Simulations', 'value': reports.totals.simulations}
+] %}
+{% include "partials/stat_cards.html" %}
+
+<section class="insight-grid">
+    <article class="insight-card">
+        <div class="panel-kicker">Topline</div>
+        <h3>Status visibility</h3>
+        <p>Track line item state, issue mix, and simulation volume from one reporting surface.</p>
+    </article>
+    <article class="insight-card">
+        <div class="panel-kicker">Usage</div>
+        <h3>Operator-friendly charts</h3>
+        <p>Compact visual summaries are tuned for laptop screens and dense admin workflows.</p>
+    </article>
+    <article class="insight-card">
+        <div class="panel-kicker">Analysis</div>
+        <h3>Failure reason trends</h3>
+        <p>Compare the most common blockers across simulated auction requests and troubleshooting rows.</p>
+    </article>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Status Mix</div><h2>Line Item Status Breakdown</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ reports.line_item_status|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Issue Taxonomy</div><h2>Issue Category Distribution</h2></div></div>
+        <div class="chart" data-chart="donut" data-series='{{ reports.issue_categories|tojson }}'></div>
+    </article>
+</section>
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Advertiser Rollup</div><h2>Advertiser Activity</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ reports.advertiser_activity|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Simulation Mix</div><h2>Simulation Outcome Summary</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ reports.simulation_summary|tojson }}'></div>
+    </article>
+</section>
+<section class="panel">
+    <div class="panel-header"><div><div class="panel-kicker">Troubleshooting Patterns</div><h2>Common Failure Reasons</h2></div></div>
+    <div class="chart" data-chart="bar" data-series='{{ reports.failure_reasons|tojson }}'></div>
+</section>
+{% endblock %}

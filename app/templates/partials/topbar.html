@@ -1,0 +1,24 @@
+<header class="topbar">
+    <div class="topbar-title-wrap">
+        <button type="button" class="icon-button icon-button-ghost nav-toggle" data-sidebar-toggle aria-label="Toggle navigation">Menu</button>
+        <div>
+            <div class="breadcrumb-line">AdFlow Console / {{ page_title or "Dashboard" }}</div>
+            <h1 class="page-title">{{ page_title or "Dashboard" }}</h1>
+            <p class="page-subtitle">Enterprise ad serving operations training environment</p>
+        </div>
+    </div>
+    <div class="topbar-actions">
+        <form class="top-search" action="{{ request.path }}" method="get">
+            <input type="search" name="q" placeholder="Search records, issue titles, campaigns">
+        </form>
+        <button type="button" class="icon-button icon-notification" aria-label="Notifications">12</button>
+        <button type="button" class="secondary-button" data-modal-open>Guide</button>
+        <div class="user-pill">
+            <span>{{ g.user.name }}</span>
+            <span class="muted">{{ g.user.role }}</span>
+        </div>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+            <button class="secondary-button" type="submit">Sign Out</button>
+        </form>
+    </div>
+</header>

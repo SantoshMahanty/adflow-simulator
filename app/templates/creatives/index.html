@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Creatives</h2>
+        <a class="primary-button" href="{{ url_for('creatives.create') }}">Add Creative</a>
+    </div>
+    <form method="get" class="filter-bar">
+        <input type="search" name="q" value="{{ filters.q }}" placeholder="Search creative">
+        <select name="approval_status">
+            <option value="">All Approval States</option>
+            {% for status in statuses %}
+            <option value="{{ status }}" {% if filters.approval_status == status %}selected{% endif %}>{{ status.title() }}</option>
+            {% endfor %}
+        </select>
+        <button class="secondary-button" type="submit">Filter</button>
+    </form>
+    <div class="table-wrap table-scroll table-dense">
+        <table class="data-table">
+            <thead><tr><th>Creative Name</th><th>Line Item</th><th>Format</th><th>Size</th><th>Destination URL</th><th>Approval</th><th>Snippet / VAST</th><th>Preview</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                {% for creative in creatives %}
+                <tr>
+                    <td>{{ creative.name }}</td>
+                    <td><a href="{{ url_for('line_items.detail', line_item_id=creative.line_item.id) }}">{{ creative.line_item.name }}</a></td>
+                    <td>{{ creative.creative_format }}</td>
+                    <td>{{ creative.size }}</td>
+                    <td>{{ creative.destination_url }}</td>
+                    <td>{{ status_chip(creative.approval_status) }}</td>
+                    <td class="code-cell">{{ creative.tag_snippet }}</td>
+                    <td>{{ creative.preview_text or 'Preview placeholder' }}</td>
+                    <td>{{ 'Yes' if creative.is_active else 'No' }}</td>
+                    <td class="row-actions">
+                        <a href="{{ url_for('creatives.edit', creative_id=creative.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('creatives.delete', creative_id=creative.id) }}">
+                            <button type="submit" class="danger-link">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="empty-state">No creatives found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

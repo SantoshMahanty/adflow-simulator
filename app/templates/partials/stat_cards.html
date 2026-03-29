@@ -1,0 +1,12 @@
+<section class="stats-grid">
+    {% for card in cards %}
+    <article class="stat-card stat-tone-{{ (loop.index0 % 4) + 1 }}">
+        <div class="stat-accent"></div>
+        <div class="stat-label-row">
+            <div class="stat-label">{{ card.label }}</div>
+            <div class="stat-meta">Live</div>
+        </div>
+        <div class="stat-value">{{ card.value }}</div>
+    </article>
+    {% endfor %}
+</section>

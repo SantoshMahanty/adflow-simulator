@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <h2>Placements</h2>
+        <a class="primary-button" href="{{ url_for('placements.create') }}">Add Placement</a>
+    </div>
+    <div class="table-wrap table-scroll">
+        <table class="data-table">
+            <thead><tr><th>Placement Name</th><th>Linked Ad Units</th><th>Device Type</th><th>Format</th><th>Notes</th><th></th></tr></thead>
+            <tbody>
+                {% for placement in placements %}
+                <tr>
+                    <td>{{ placement.name }}</td>
+                    <td>{{ placement.ad_units | map(attribute='path') | join(', ') }}</td>
+                    <td>{{ placement.device_type }}</td>
+                    <td>{{ placement.placement_format }}</td>
+                    <td>{{ placement.notes }}</td>
+                    <td class="row-actions">
+                        <a href="{{ url_for('placements.edit', placement_id=placement.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('placements.delete', placement_id=placement.id) }}"><button type="submit" class="danger-link">Delete</button></form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No placements found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

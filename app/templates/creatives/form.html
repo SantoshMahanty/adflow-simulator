@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header"><h2>{{ 'Create Creative' if mode == 'create' else 'Edit Creative' }}</h2></div>
+    <form method="post" class="form-grid">
+        <label><span>Creative Name</span><input type="text" name="name" value="{{ creative.name or '' }}" required></label>
+        <label>
+            <span>Linked Line Item</span>
+            <select name="line_item_id" required>
+                <option value="">Select line item</option>
+                {% for item in line_items %}
+                <option value="{{ item.id }}" {% if creative.line_item_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Format</span>
+            <select name="creative_format">
+                {% for fmt in formats %}
+                <option value="{{ fmt }}" {% if creative.creative_format == fmt %}selected{% endif %}>{{ fmt.title() }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label><span>Size</span><input type="text" name="size" value="{{ creative.size or '' }}" placeholder="300x250" required></label>
+        <label><span>Destination URL</span><input type="url" name="destination_url" value="{{ creative.destination_url or '' }}"></label>
+        <label>
+            <span>Approval Status</span>
+            <select name="approval_status">
+                {% for status in statuses %}
+                <option value="{{ status }}" {% if creative.approval_status == status %}selected{% endif %}>{{ status.title() }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span"><span>Tag Snippet / VAST URL</span><textarea name="tag_snippet" rows="4">{{ creative.tag_snippet or '' }}</textarea></label>
+        <label class="full-span"><span>Preview Text</span><input type="text" name="preview_text" value="{{ creative.preview_text or '' }}"></label>
+        <label class="checkbox-row"><input type="checkbox" name="is_active" {% if creative.is_active %}checked{% endif %}><span>Active creative</span></label>
+        <div class="form-actions">
+            <button class="primary-button" type="submit">Save Creative</button>
+            <a class="secondary-button" href="{{ url_for('creatives.index') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
