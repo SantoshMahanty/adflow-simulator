@@ -1,0 +1,48 @@
+{% extends "publisher/base.html" %}
+
+{% block publisher_content %}
+<section class="publisher-hero publisher-category-hero">
+    <div class="publisher-hero-copy">
+        <div class="page-intro-kicker">Category Page</div>
+        <h1>{{ category_context.title }}</h1>
+        <p>{{ category_context.description }}</p>
+    </div>
+    <div class="publisher-hero-metrics">
+        <span class="soft-chip soft-chip-strong">Category = {{ category_context.slug }}</span>
+        <span class="soft-chip">Good for contextual targeting demos</span>
+    </div>
+</section>
+
+{% for slot in slots if slot.position == 'top' %}
+{% include "publisher/partials/slot.html" %}
+{% endfor %}
+
+<section class="publisher-content-grid">
+    <div class="publisher-story-feed">
+        {% for article in category_context.articles %}
+        <article class="publisher-story-card">
+            <div class="panel-kicker">{{ article.author }}</div>
+            <h2><a href="{{ url_for('publisher.article', article_id=article.id) }}">{{ article.title }}</a></h2>
+            <p>{{ article.summary }}</p>
+            <a class="secondary-button" href="{{ url_for('publisher.article', article_id=article.id) }}">Open Article</a>
+        </article>
+        {% else %}
+        <article class="publisher-story-card">
+            <h2>No articles in this category yet</h2>
+            <p>Use the other category links or seed more publisher content if you want a broader contextual test bed.</p>
+        </article>
+        {% endfor %}
+    </div>
+    <aside class="publisher-rail">
+        {% for slot in slots if slot.position == 'sidebar' %}
+        {% include "publisher/partials/slot.html" %}
+        {% endfor %}
+    </aside>
+</section>
+
+<section class="publisher-footer-slots">
+    {% for slot in slots if slot.position in ['footer', 'anchor'] %}
+    {% include "publisher/partials/slot.html" %}
+    {% endfor %}
+</section>
+{% endblock %}

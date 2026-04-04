@@ -24,6 +24,7 @@
         </label>
         <label><span>Size</span><input type="text" name="size" value="{{ creative.size or '' }}" placeholder="300x250" required></label>
         <label><span>Destination URL</span><input type="url" name="destination_url" value="{{ creative.destination_url or '' }}"></label>
+        <label><span>Asset URL</span><input type="url" name="asset_url" value="{{ creative.asset_url or '' }}" placeholder="https://cdn.example.com/banner.jpg"></label>
         <label>
             <span>Approval Status</span>
             <select name="approval_status">
@@ -32,10 +33,13 @@
                 {% endfor %}
             </select>
         </label>
-        <label class="full-span"><span>Tag Snippet / VAST URL</span><textarea name="tag_snippet" rows="4">{{ creative.tag_snippet or '' }}</textarea></label>
-        <label class="full-span"><span>Preview Text</span><input type="text" name="preview_text" value="{{ creative.preview_text or '' }}"></label>
+        <label class="full-span"><span>HTML Snippet / Third-Party Tag</span><textarea name="tag_snippet" rows="4" placeholder="<div class='ad-card'>Promo</div> or &lt;script&gt;...">{{ creative.tag_snippet or '' }}</textarea></label>
+        <label class="full-span"><span>Preview Text</span><input type="text" name="preview_text" value="{{ creative.preview_text or '' }}" placeholder="Spring launch banner"></label>
         <label class="checkbox-row"><input type="checkbox" name="is_active" {% if creative.is_active %}checked{% endif %}><span>Active creative</span></label>
         <div class="form-actions">
+            {% if creative.id %}
+            <a class="secondary-button" href="{{ url_for('publisher.preview_creative', creative_id=creative.id) }}" target="_blank" rel="noopener">Open Test Page</a>
+            {% endif %}
             <button class="primary-button" type="submit">Save Creative</button>
             <a class="secondary-button" href="{{ url_for('creatives.index') }}">Cancel</a>
         </div>

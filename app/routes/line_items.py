@@ -5,7 +5,15 @@ from sqlalchemy.orm import joinedload, selectinload
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from ..models import AdUnit, Advertiser, KeyValueValue, LineItem, LineItemTargeting, Order, db
-from ..services import evaluate_line_item, log_activity, login_required
+from ..services import (
+    WORKFLOW_STATES,
+    apply_workflow_state,
+    evaluate_line_item,
+    launch_line_item,
+    log_activity,
+    login_required,
+    validate_launch,
+)
 from ..services.helpers import parse_date, parse_decimal, parse_int
 
 
@@ -19,7 +27,9 @@ LINE_ITEM_TYPES = [
     "House",
 ]
 
-LINE_ITEM_STATUSES = ["active", "paused", "draft", "completed"]
+LINE_ITEM_STATUSES = ["draft", "active", "live", "paused", "completed", "archived"]
+PAGE_TYPE_TARGETS = ["home", "article", "category"]
+SLOT_POSITION_TARGETS = ["top", "sidebar", "in_article", "footer", "video"]
 
 
 line_items_bp = Blueprint("line_items", __name__, url_prefix="/line-items")
@@ -27,6 +37,8 @@ line_items_bp = Blueprint("line_items", __name__, url_prefix="/line-items")
 
 def default_request_context(line_item):
     ad_unit_rule = next((rule for rule in line_item.targeting_rules if rule.target_type == "ad_unit"), None)
+    page_type_rule = next((rule for rule in line_item.targeting_rules if rule.target_type == "page_type"), None)
+    slot_position_rule = next((rule for rule in line_item.targeting_rules if rule.target_type == "slot_position"), None)
     key_values = {
         rule.key_value_value.key.name: rule.key_value_value.value
         for rule in line_item.targeting_rules
@@ -43,6 +55,8 @@ def default_request_context(line_item):
         "audience": (line_item.audience_targeting or "").split(",")[0].strip(),
         "creative_size": line_item.creative_size,
         "content_category": content_category_rule,
+        "page_type": page_type_rule.target_value if page_type_rule else "",
+        "slot_position": slot_position_rule.target_value if slot_position_rule else "",
         "key_values": key_values,
     }
 
@@ -54,6 +68,14 @@ def sync_targeting(line_item, form):
     for ad_unit_path in form.getlist("ad_unit_paths"):
         if ad_unit_path:
             line_item.targeting_rules.append(LineItemTargeting(target_type="ad_unit", target_value=ad_unit_path))
+
+    for page_type in form.getlist("page_types"):
+        if page_type:
+            line_item.targeting_rules.append(LineItemTargeting(target_type="page_type", target_value=page_type))
+
+    for slot_position in form.getlist("slot_positions"):
+        if slot_position:
+            line_item.targeting_rules.append(LineItemTargeting(target_type="slot_position", target_value=slot_position))
 
     content_category = form.get("content_category", "").strip()
     if content_category:
@@ -87,6 +109,7 @@ def index():
         "advertiser_id": request.args.get("advertiser_id", "").strip(),
         "line_item_type": request.args.get("line_item_type", "").strip(),
         "status": request.args.get("status", "").strip(),
+        "workflow_state": request.args.get("workflow_state", "").strip(),
         "geo": request.args.get("geo", "").strip(),
         "device": request.args.get("device", "").strip(),
         "date_from": request.args.get("date_from", "").strip(),
@@ -102,6 +125,8 @@ def index():
         query = query.filter(LineItem.line_item_type == filters["line_item_type"])
     if filters["status"]:
         query = query.filter(LineItem.status == filters["status"])
+    if filters["workflow_state"]:
+        query = query.filter(LineItem.workflow_state == filters["workflow_state"])
     if filters["geo"]:
         query = query.filter(LineItem.geo_targeting.ilike(f"%{filters['geo']}%"))
     if filters["device"]:
@@ -134,6 +159,9 @@ def index():
         advertisers=advertisers,
         line_item_types=LINE_ITEM_TYPES,
         statuses=LINE_ITEM_STATUSES,
+        workflow_states=WORKFLOW_STATES,
+        page_type_targets=PAGE_TYPE_TARGETS,
+        slot_position_targets=SLOT_POSITION_TARGETS,
         eligibility_map=eligibility_map,
         filters=filters,
     )
@@ -142,7 +170,7 @@ def index():
 @line_items_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def create():
-    line_item = LineItem(status="draft", line_item_type="Standard", priority=2)
+    line_item = LineItem(status="draft", workflow_state="Draft", line_item_type="Standard", priority=2, delivery_weight=100)
     advertisers, orders, ad_units, key_value_values = load_form_collections()
     if request.method == "POST":
         populate_line_item(line_item, request.form)
@@ -165,6 +193,9 @@ def create():
         key_value_values=key_value_values,
         line_item_types=LINE_ITEM_TYPES,
         statuses=LINE_ITEM_STATUSES,
+        workflow_states=WORKFLOW_STATES,
+        page_type_targets=PAGE_TYPE_TARGETS,
+        slot_position_targets=SLOT_POSITION_TARGETS,
         mode="create",
     )
 
@@ -175,12 +206,14 @@ def detail(line_item_id):
     line_item = LineItem.query.get_or_404(line_item_id)
     request_context = default_request_context(line_item)
     evaluation = evaluate_line_item(line_item, request_context)
+    launch_validation = validate_launch(line_item)
     return render_template(
         "line_items/detail.html",
         page_title=line_item.name,
         line_item=line_item,
         evaluation=evaluation,
         request_context=request_context,
+        launch_validation=launch_validation,
     )
 
 
@@ -208,6 +241,9 @@ def edit(line_item_id):
         key_value_values=key_value_values,
         line_item_types=LINE_ITEM_TYPES,
         statuses=LINE_ITEM_STATUSES,
+        workflow_states=WORKFLOW_STATES,
+        page_type_targets=PAGE_TYPE_TARGETS,
+        slot_position_targets=SLOT_POSITION_TARGETS,
         mode="edit",
     )
 
@@ -224,12 +260,26 @@ def delete(line_item_id):
     return redirect(url_for("line_items.index"))
 
 
+@line_items_bp.route("/<int:line_item_id>/launch", methods=["POST"])
+@login_required
+def launch(line_item_id):
+    line_item = LineItem.query.get_or_404(line_item_id)
+    validation = launch_line_item(line_item)
+    if validation["ready"]:
+        log_activity("line_item", line_item.id, "launched", f"Line item {line_item.name} moved to {line_item.workflow_state}.")
+        flash(f"Line item launched successfully as {line_item.workflow_state}.", "success")
+    else:
+        flash("Launch validation failed: " + " ".join(validation["issues"]), "error")
+    return redirect(url_for("line_items.detail", line_item_id=line_item.id))
+
+
 def populate_line_item(line_item, form):
     line_item.name = form.get("name", "").strip()
     line_item.advertiser_id = parse_int(form.get("advertiser_id"), None)
     line_item.order_id = parse_int(form.get("order_id"), None)
     line_item.line_item_type = form.get("line_item_type", "Standard")
     line_item.priority = parse_int(form.get("priority"), 2)
+    line_item.delivery_weight = max(parse_int(form.get("delivery_weight"), 100), 1)
     line_item.start_date = parse_date(form.get("start_date"))
     line_item.end_date = parse_date(form.get("end_date"))
     line_item.goal_impressions = parse_int(form.get("goal_impressions"), 0)
@@ -240,7 +290,11 @@ def populate_line_item(line_item, form):
     line_item.geo_targeting = form.get("geo_targeting", "").strip()
     line_item.device_targeting = form.get("device_targeting", "").strip()
     line_item.audience_targeting = form.get("audience_targeting", "").strip()
-    line_item.status = form.get("status", "draft")
+    line_item.budget_amount = parse_decimal(form.get("budget_amount"), "0.00")
+    line_item.spent_amount = parse_decimal(form.get("spent_amount"), "0.00")
+    line_item.daily_impression_cap = parse_int(form.get("daily_impression_cap"), 0)
+    line_item.daily_spend_cap = parse_decimal(form.get("daily_spend_cap"), "0.00")
+    apply_workflow_state(line_item, form.get("workflow_state", "Draft"))
     line_item.notes = form.get("notes", "").strip()
 
 

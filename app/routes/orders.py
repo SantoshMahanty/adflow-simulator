@@ -1,8 +1,8 @@
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 
 from ..models import Advertiser, Order, db
-from ..services import log_activity, login_required
-from ..services.helpers import parse_date, parse_int
+from ..services import WORKFLOW_STATES, log_activity, login_required
+from ..services.helpers import parse_date, parse_decimal, parse_int
 
 
 orders_bp = Blueprint("orders", __name__, url_prefix="/orders")
@@ -38,7 +38,7 @@ def index():
 @orders_bp.route("/new", methods=["GET", "POST"])
 @login_required
 def create():
-    order = Order(status="active")
+    order = Order(status="active", workflow_state="Draft")
     advertisers = Advertiser.query.order_by(Advertiser.name.asc()).all()
     if request.method == "POST":
         order.name = request.form.get("name", "").strip()
@@ -46,6 +46,9 @@ def create():
         order.start_date = parse_date(request.form.get("start_date"))
         order.end_date = parse_date(request.form.get("end_date"))
         order.status = request.form.get("status", "active")
+        order.workflow_state = request.form.get("workflow_state", "Draft")
+        order.budget_amount = parse_decimal(request.form.get("budget_amount"), "0.00")
+        order.spent_amount = parse_decimal(request.form.get("spent_amount"), "0.00")
         order.notes = request.form.get("notes", "").strip()
 
         if not order.name or not order.advertiser_id or not order.start_date or not order.end_date:
@@ -59,7 +62,7 @@ def create():
             flash("Order created successfully.", "success")
             return redirect(url_for("orders.index"))
 
-    return render_template("orders/form.html", page_title="Create Order", order=order, advertisers=advertisers, mode="create")
+    return render_template("orders/form.html", page_title="Create Order", order=order, advertisers=advertisers, mode="create", workflow_states=WORKFLOW_STATES)
 
 
 @orders_bp.route("/<int:order_id>")
@@ -80,6 +83,9 @@ def edit(order_id):
         order.start_date = parse_date(request.form.get("start_date"))
         order.end_date = parse_date(request.form.get("end_date"))
         order.status = request.form.get("status", "active")
+        order.workflow_state = request.form.get("workflow_state", "Draft")
+        order.budget_amount = parse_decimal(request.form.get("budget_amount"), "0.00")
+        order.spent_amount = parse_decimal(request.form.get("spent_amount"), "0.00")
         order.notes = request.form.get("notes", "").strip()
 
         if not order.name or not order.advertiser_id or not order.start_date or not order.end_date:
@@ -92,7 +98,7 @@ def edit(order_id):
             flash("Order updated successfully.", "success")
             return redirect(url_for("orders.detail", order_id=order.id))
 
-    return render_template("orders/form.html", page_title="Edit Order", order=order, advertisers=advertisers, mode="edit")
+    return render_template("orders/form.html", page_title="Edit Order", order=order, advertisers=advertisers, mode="edit", workflow_states=WORKFLOW_STATES)
 
 
 @orders_bp.route("/<int:order_id>/delete", methods=["POST"])

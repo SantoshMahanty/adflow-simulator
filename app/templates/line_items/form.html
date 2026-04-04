@@ -32,22 +32,45 @@
             </select>
         </label>
         <label><span>Priority</span><input type="number" name="priority" value="{{ line_item.priority or 2 }}" required></label>
+        <label><span>Delivery Weight</span><input type="number" name="delivery_weight" value="{{ line_item.delivery_weight or 100 }}" min="1" required></label>
         <label><span>Start Date</span><input type="date" name="start_date" value="{{ line_item.start_date }}" required></label>
         <label><span>End Date</span><input type="date" name="end_date" value="{{ line_item.end_date }}" required></label>
         <label><span>Goal Impressions</span><input type="number" name="goal_impressions" value="{{ line_item.goal_impressions or 0 }}" required></label>
         <label><span>Delivered Impressions</span><input type="number" name="delivered_impressions" value="{{ line_item.delivered_impressions or 0 }}" required></label>
         <label><span>CPM</span><input type="number" step="0.01" name="cpm" value="{{ line_item.cpm or 0 }}" required></label>
+        <label><span>Budget Amount</span><input type="number" step="0.01" name="budget_amount" value="{{ line_item.budget_amount or 0 }}" required></label>
+        <label><span>Spent Amount</span><input type="number" step="0.01" name="spent_amount" value="{{ line_item.spent_amount or 0 }}"></label>
         <label><span>Frequency Cap</span><input type="number" name="frequency_cap" value="{{ line_item.frequency_cap or 0 }}"></label>
+        <label><span>Daily Impression Cap</span><input type="number" name="daily_impression_cap" value="{{ line_item.daily_impression_cap or 0 }}"></label>
+        <label><span>Daily Spend Cap</span><input type="number" step="0.01" name="daily_spend_cap" value="{{ line_item.daily_spend_cap or 0 }}"></label>
         <label><span>Creative Size</span><input type="text" name="creative_size" value="{{ line_item.creative_size or '' }}" placeholder="300x250" required></label>
         <label><span>Geo Targeting</span><input type="text" name="geo_targeting" value="{{ line_item.geo_targeting or '' }}" placeholder="delhi,mumbai"></label>
         <label><span>Device Targeting</span><input type="text" name="device_targeting" value="{{ line_item.device_targeting or '' }}" placeholder="desktop,mobile"></label>
         <label><span>Audience Targeting</span><input type="text" name="audience_targeting" value="{{ line_item.audience_targeting or '' }}" placeholder="sports_fans"></label>
         <label><span>Content Category</span><input type="text" name="content_category" value="{{ (line_item.targeting_rules|selectattr('target_type', 'equalto', 'content_category')|map(attribute='target_value')|list|first) or '' }}" placeholder="sports"></label>
+        <label class="full-span">
+            <span>Page Type Targeting</span>
+            {% set selected_page_types = line_item.targeting_rules|selectattr('target_type', 'equalto', 'page_type')|map(attribute='target_value')|list %}
+            <select name="page_types" multiple size="3">
+                {% for page_type in page_type_targets %}
+                <option value="{{ page_type }}" {% if page_type in selected_page_types %}selected{% endif %}>{{ page_type.title() }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="full-span">
+            <span>Slot Position Targeting</span>
+            {% set selected_slot_positions = line_item.targeting_rules|selectattr('target_type', 'equalto', 'slot_position')|map(attribute='target_value')|list %}
+            <select name="slot_positions" multiple size="5">
+                {% for slot_position in slot_position_targets %}
+                <option value="{{ slot_position }}" {% if slot_position in selected_slot_positions %}selected{% endif %}>{{ slot_position.replace('_', ' ')|title }}</option>
+                {% endfor %}
+            </select>
+        </label>
         <label>
-            <span>Status</span>
-            <select name="status">
-                {% for status in statuses %}
-                <option value="{{ status }}" {% if line_item.status == status %}selected{% endif %}>{{ status.title() }}</option>
+            <span>Workflow State</span>
+            <select name="workflow_state">
+                {% for workflow_state in workflow_states %}
+                <option value="{{ workflow_state }}" {% if line_item.workflow_state == workflow_state %}selected{% endif %}>{{ workflow_state }}</option>
                 {% endfor %}
             </select>
         </label>
@@ -71,6 +94,10 @@
         </label>
         <label class="full-span"><span>Notes</span><textarea name="notes" rows="5">{{ line_item.notes or '' }}</textarea></label>
         <div class="form-actions">
+            {% if line_item.id %}
+            <a class="secondary-button" href="{{ url_for('publisher.preview_line_item', line_item_id=line_item.id) }}" target="_blank" rel="noopener">Open Test Page</a>
+            <button class="secondary-button" type="submit" formaction="{{ url_for('line_items.launch', line_item_id=line_item.id) }}" formmethod="post">Launch</button>
+            {% endif %}
             <button class="primary-button" type="submit">Save Line Item</button>
             <a class="secondary-button" href="{{ url_for('line_items.index') }}">Cancel</a>
         </div>

@@ -37,6 +37,8 @@ def build_request_context(form):
         "creative_size": form.get("creative_size", "").strip(),
         "time": request_time,
         "content_category": form.get("content_category", "").strip(),
+        "page_type": form.get("page_type", "").strip(),
+        "slot_position": form.get("slot_position", "").strip(),
         "key_values": key_values,
     }
 

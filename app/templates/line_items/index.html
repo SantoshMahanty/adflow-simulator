@@ -27,6 +27,12 @@
             <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status.title() }}</option>
             {% endfor %}
         </select>
+        <select name="workflow_state">
+            <option value="">All Workflow States</option>
+            {% for workflow_state in workflow_states %}
+            <option value="{{ workflow_state }}" {% if filters.workflow_state == workflow_state %}selected{% endif %}>{{ workflow_state }}</option>
+            {% endfor %}
+        </select>
         <input type="text" name="geo" value="{{ filters.geo }}" placeholder="Geo">
         <input type="text" name="device" value="{{ filters.device }}" placeholder="Device">
         <input type="date" name="date_from" value="{{ filters.date_from }}">
@@ -42,12 +48,14 @@
                     <th>Advertiser</th>
                     <th>Type</th>
                     <th>Priority</th>
+                    <th>Weight</th>
                     <th>CPM</th>
                     <th>Goal Impressions</th>
                     <th>Delivered</th>
                     <th>Frequency Cap</th>
                     <th>Targeting</th>
                     <th>Status</th>
+                    <th>Workflow</th>
                     <th>Eligibility</th>
                     <th></th>
                 </tr>
@@ -60,12 +68,14 @@
                     <td>{{ line_item.advertiser.name }}</td>
                     <td>{{ line_item.line_item_type }}</td>
                     <td>{{ line_item.priority }}</td>
+                    <td>{{ line_item.delivery_weight }}</td>
                     <td>{{ line_item.cpm }}</td>
                     <td>{{ "{:,}".format(line_item.goal_impressions) }}</td>
                     <td>{{ "{:,}".format(line_item.delivered_impressions) }}</td>
                     <td>{{ line_item.frequency_cap }}</td>
                     <td>{{ line_item.targeting_summary }}</td>
                     <td>{{ status_chip(line_item.status) }}</td>
+                    <td>{{ status_chip(line_item.workflow_state) }}</td>
                     <td>
                         {% if eligibility_map[line_item.id] %}
                         <span class="status-chip active">Eligible</span>
@@ -75,14 +85,18 @@
                     </td>
                     <td class="row-actions">
                         <a href="{{ url_for('line_items.detail', line_item_id=line_item.id) }}">View</a>
+                        <a href="{{ url_for('publisher.preview_line_item', line_item_id=line_item.id) }}" target="_blank" rel="noopener">Open Test Page</a>
                         <a href="{{ url_for('line_items.edit', line_item_id=line_item.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('line_items.launch', line_item_id=line_item.id) }}">
+                            <button type="submit">Launch</button>
+                        </form>
                         <form method="post" action="{{ url_for('line_items.delete', line_item_id=line_item.id) }}">
                             <button type="submit" class="danger-link">Delete</button>
                         </form>
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="13" class="empty-state">No line items found.</td></tr>
+                <tr><td colspan="15" class="empty-state">No line items found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

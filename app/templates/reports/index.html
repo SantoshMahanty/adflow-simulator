@@ -12,10 +12,38 @@
         <span class="metric-pill neutral">Seeded Metrics</span>
     </div>
 </section>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Report Builder</div>
+            <h2>Pull a downloadable report</h2>
+        </div>
+    </div>
+    <form method="get" class="form-grid">
+        <label>
+            <span>Report Type</span>
+            <select name="report_type">
+                {% for report_type in report_types %}
+                <option value="{{ report_type.value }}" {% if filters.report_type == report_type.value %}selected{% endif %}>{{ report_type.label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label><span>Date From</span><input type="date" name="date_from" value="{{ filters.date_from }}"></label>
+        <label><span>Date To</span><input type="date" name="date_to" value="{{ filters.date_to }}"></label>
+        <div class="form-actions">
+            <button class="secondary-button" type="submit">Refresh Report View</button>
+            <a class="primary-button" href="{{ url_for('reports.export', report_type=filters.report_type, date_from=filters.date_from, date_to=filters.date_to) }}">Download CSV</a>
+        </div>
+    </form>
+</section>
 {% set cards = [
     {'label': 'Advertisers', 'value': reports.totals.advertisers},
     {'label': 'Orders', 'value': reports.totals.orders},
     {'label': 'Line Items', 'value': reports.totals.line_items},
+    {'label': 'Ad Requests', 'value': reports.totals.requests},
+    {'label': 'Impressions', 'value': reports.totals.impressions},
+    {'label': 'Clicks', 'value': reports.totals.clicks},
+    {'label': 'Spend', 'value': reports.totals.spend},
     {'label': 'Simulations', 'value': reports.totals.simulations}
 ] %}
 {% include "partials/stat_cards.html" %}
@@ -56,6 +84,26 @@
     <article class="panel">
         <div class="panel-header"><div><div class="panel-kicker">Simulation Mix</div><h2>Simulation Outcome Summary</h2></div></div>
         <div class="chart" data-chart="bar" data-series='{{ reports.simulation_summary|tojson }}'></div>
+    </article>
+</section>
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Publisher Delivery</div><h2>Impression and Click Flow</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ reports.delivery_activity|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Publisher Inventory</div><h2>Delivery by Publisher Slot</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ reports.slot_activity|tojson }}'></div>
+    </article>
+</section>
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Learning Loop</div><h2>What To Watch</h2></div></div>
+        <div class="list-stack">
+            <div class="list-item">Impressions increase when a creative renders and the slot becomes viewable.</div>
+            <div class="list-item">Clicks increase only when the creative is clicked through the tracking redirect endpoint.</div>
+            <div class="list-item">CTR x100 is a lightweight teaching metric so the report stays readable in this simulator.</div>
+        </div>
     </article>
 </section>
 <section class="panel">

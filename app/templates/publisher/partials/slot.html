@@ -1,0 +1,17 @@
+<section class="publisher-ad-slot slot-{{ slot.position|replace('_', '-') }} {% if slot.path == highlight_slot %}slot-highlight{% endif %}"
+    data-ad-slot
+    data-slot-id="{{ slot.path }}"
+    data-page-type="{{ page_type }}"
+    data-page-url="{{ page_url }}"
+    data-size="{{ slot.size }}"
+    data-position="{{ slot.position }}"
+    data-category="{{ page_category or '' }}"
+    aria-label="{{ slot.name }}">
+    <div class="publisher-slot-label">{{ slot.name }} · {{ slot.size }}</div>
+    <div class="publisher-slot-stage" data-slot-stage>
+        <div class="publisher-slot-placeholder">
+            <strong>Requesting ad</strong>
+            <span>{{ slot.path }}</span>
+        </div>
+    </div>
+</section>

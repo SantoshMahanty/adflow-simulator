@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ page_title }} | {{ publisher_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body class="publisher-body">
+    <header class="publisher-topbar">
+        <div class="publisher-brand-shell">
+            <a class="publisher-brand" href="{{ url_for('publisher.home') }}">
+                <span class="publisher-brand-mark">AT</span>
+                <span>
+                    <strong>{{ publisher_name }}</strong>
+                    <span class="publisher-brand-subtitle">Embedded mock publisher inside the ad-serving simulator</span>
+                </span>
+            </a>
+            <nav class="publisher-nav">
+                <a href="{{ url_for('publisher.home') }}">Home</a>
+                <a href="{{ url_for('publisher.test_auction') }}">Auction Test</a>
+                <a href="{{ url_for('publisher.category', category_slug='technology') }}">Technology</a>
+                <a href="{{ url_for('publisher.category', category_slug='sports') }}">Sports</a>
+                <a href="{{ url_for('publisher.category', category_slug='business') }}">Business</a>
+            </nav>
+        </div>
+        <div class="publisher-toolbar">
+            <a class="secondary-button" href="{{ url_for('dashboard.index') }}">Back To Admin</a>
+        </div>
+    </header>
+
+    <main class="publisher-shell">
+        {% block publisher_content %}{% endblock %}
+    </main>
+
+    <aside class="publisher-debug-panel {% if debug_mode %}is-open{% endif %}" data-debug-panel data-debug-default="{{ '1' if debug_mode else '0' }}">
+        <div class="publisher-debug-header">
+            <div>
+                <div class="panel-kicker">Debug Mode</div>
+                <h2>Slot Decision Console</h2>
+            </div>
+            <button type="button" class="icon-button icon-button-ghost" data-debug-toggle>Debug</button>
+        </div>
+        <div class="publisher-debug-summary">
+            <span class="soft-chip">Page {{ page_type }}</span>
+            <span class="soft-chip">{{ page_category or 'general' }}</span>
+        </div>
+        <div class="publisher-debug-body" data-debug-body>
+            <div class="empty-state">Each slot request will appear here with the selected line item, creative, and impression state.</div>
+        </div>
+    </aside>
+
+    <script>
+        window.publisherPageContext = {
+            pageType: "{{ page_type }}",
+            pageUrl: "{{ page_url }}",
+            category: "{{ page_category or '' }}",
+            geo: "delhi_ncr",
+            audience: "sports_fans",
+            sessionDebug: {{ 'true' if debug_mode else 'false' }},
+            highlightSlot: "{{ highlight_slot or '' }}"
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/publisher.js') }}"></script>
+</body>
+</html>

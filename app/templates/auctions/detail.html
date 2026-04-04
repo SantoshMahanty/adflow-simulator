@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="detail-header">
+    <div>
+        <div class="panel-kicker">Why Did This Ad Serve?</div>
+        <h2>Auction {{ ad_request.request_id[:12] }}</h2>
+        <p>{{ ad_request.page_type or 'unknown' }} | {{ ad_request.ad_unit.path if ad_request.ad_unit else ad_request.ad_unit_code }} | {{ ad_request.created_at.strftime('%d %b %Y %H:%M:%S') }}</p>
+    </div>
+    <div class="detail-actions">
+        {{ status_chip(ad_request.result.status if ad_request.result else 'pending') }}
+        <a class="secondary-button" href="{{ url_for('auctions.detail', request_id=ad_request.request_id, format='json') }}" target="_blank" rel="noopener">Open JSON</a>
+        <a class="secondary-button" href="{{ url_for('auctions.index') }}">Back to Logs</a>
+    </div>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Request</div><h2>Request Parameters</h2></div></div>
+        <pre>{{ diagnostics.request|tojson(indent=2) }}</pre>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Outcome</div><h2>Winner and Render Status</h2></div></div>
+        <div class="winner-card">
+            <div class="winner-label">Winner</div>
+            <div class="winner-name">{{ diagnostics.winner or 'House / Empty' }}</div>
+            <p>Creative: {{ diagnostics.creative or 'None' }}</p>
+            <p>Winner reason: {{ diagnostics.winner_reason or '-' }}</p>
+            <p>Fallback reason: {{ diagnostics.fallback_reason or '-' }}</p>
+            <p>Render status: {{ diagnostics.render_status }}</p>
+            <p>Impression fired: {{ 'Yes' if diagnostics.impression_status else 'No' }}</p>
+            <p>Click logged: {{ 'Yes' if diagnostics.click_status else 'No' }}</p>
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header"><div><div class="panel-kicker">Competition</div><h2>Candidate Line Items</h2></div></div>
+    <div class="publisher-debug-summary">
+        <span class="soft-chip">Considered {{ diagnostics.considered_count }}</span>
+        <span class="soft-chip soft-chip-success">Eligible {{ diagnostics.eligible_count }}</span>
+        <span class="soft-chip soft-chip-strong">Filtered {{ diagnostics.ineligible_count }}</span>
+    </div>
+    <div class="table-wrap table-scroll table-dense">
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Line Item</th>
+                    <th>Creative</th>
+                    <th>Eligible</th>
+                    <th>Priority</th>
+                    <th>CPM</th>
+                    <th>Effective CPM</th>
+                    <th>Pacing</th>
+                    <th>Win Reason</th>
+                    <th>Loss Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in diagnostics.candidates %}
+                <tr>
+                    <td>{{ candidate.line_item }}</td>
+                    <td>{{ candidate.creative or '-' }}</td>
+                    <td>{{ status_chip('eligible' if candidate.eligible else 'ineligible') }}</td>
+                    <td>{{ candidate.priority_bucket }}</td>
+                    <td>{{ candidate.cpm }}</td>
+                    <td>{{ candidate.effective_cpm }}</td>
+                    <td>{{ candidate.pacing_score }}</td>
+                    <td>{{ candidate.win_reason or '-' }}</td>
+                    <td>{{ candidate.loss_reason or '-' }}</td>
+                </tr>
+                <tr>
+                    <td colspan="9">
+                        <ul class="hint-list">
+                            {% for check in candidate.checks %}
+                            <li>{{ check.label }}: {{ 'Pass' if check.passed else check.message }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="empty-state">No candidates logged for this request.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

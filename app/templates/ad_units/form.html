@@ -6,6 +6,8 @@
     <form method="post" class="form-grid">
         <label><span>Name</span><input type="text" name="name" value="{{ ad_unit.name or '' }}" required></label>
         <label><span>Path</span><input type="text" name="path" value="{{ ad_unit.path or '' }}" placeholder="/sports/homepage/top_banner" required></label>
+        <label><span>Ad Unit Code</span><input type="text" name="ad_unit_code" value="{{ ad_unit.ad_unit_code or '' }}" placeholder="top_banner"></label>
+        <label><span>Slot Name</span><input type="text" name="slot_name" value="{{ ad_unit.slot_name or '' }}" placeholder="Top Banner"></label>
         <label><span>Size Support</span><input type="text" name="size_support" value="{{ ad_unit.size_support or '' }}" placeholder="728x90,300x250" required></label>
         <label><span>Environment</span><input type="text" name="environment" value="{{ ad_unit.environment or '' }}" placeholder="web" required></label>
         <label>

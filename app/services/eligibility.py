@@ -17,13 +17,17 @@ def build_troubleshooting_hints(reasons):
     mapping = {
         "Line item is paused or not active.": "Activate the line item or move it from draft or paused to active.",
         "Current date is outside the flight window.": "Check start and end dates on the order and line item.",
+        "Line item has exhausted its impression goal.": "Raise the impression goal or reset delivered volume for testing.",
         "Geo targeting does not match the request.": "Compare request geo with configured geo targeting.",
         "Device targeting does not match the request.": "Validate device targeting and environment mapping.",
         "Audience targeting does not match the request.": "Review audience segment mapping and request segment availability.",
         "Creative size does not match the request.": "Align the request size with the line item and creative sizes.",
         "No approved and active creative is available.": "Approve or replace creatives and confirm active serving state.",
+        "Line item budget is exhausted.": "Increase the line item budget or lower delivery for testing.",
         "Ad unit targeting does not include the request ad unit.": "Assign the correct ad unit or placement to the line item.",
         "Content category targeting does not match.": "Verify content_category targeting against request metadata.",
+        "Page type targeting does not match the request.": "Check whether the line item is targeted to home, article, or category pages.",
+        "Slot position targeting does not match the request.": "Confirm the line item targets the requested top, sidebar, in-article, footer, or anchor slot.",
         "Required key-value targeting does not match.": "Check page key-values and the line item's required values.",
     }
     return [mapping[reason] for reason in reasons if reason in mapping]
@@ -39,7 +43,11 @@ def evaluate_line_item(line_item, request_context, current_day=None):
         if not passed:
             reasons.append(message)
 
-    add_check("Status", line_item.status.lower() == "active", "Line item is paused or not active.")
+    add_check(
+        "Status",
+        (line_item.workflow_state or "").lower() in {"live", "scheduled"} and line_item.status.lower() in {"active", "live"},
+        "Line item is paused or not active.",
+    )
     add_check(
         "Flight Dates",
         line_item.start_date <= current_day <= line_item.end_date,
@@ -55,6 +63,16 @@ def evaluate_line_item(line_item, request_context, current_day=None):
         "Audience",
         value_matches(line_item.audience_targeting, request_context.get("audience")),
         "Audience targeting does not match the request.",
+    )
+    add_check(
+        "Goal Remaining",
+        not line_item.goal_impressions or line_item.delivered_impressions < line_item.goal_impressions,
+        "Line item has exhausted its impression goal.",
+    )
+    add_check(
+        "Budget Remaining",
+        not getattr(line_item, "budget_amount", 0) or float(line_item.budget_amount) > float(getattr(line_item, "spent_amount", 0) or 0),
+        "Line item budget is exhausted.",
     )
 
     requested_size = (request_context.get("creative_size") or "").strip().lower()
@@ -95,6 +113,16 @@ def evaluate_line_item(line_item, request_context, current_day=None):
     category_rules = [rule for rule in line_item.targeting_rules if rule.target_type == "content_category"]
     category_ok = True if not category_rules else any((rule.target_value or "").strip().lower() == category_request for rule in category_rules)
     add_check("Content Category", category_ok, "Content category targeting does not match.")
+
+    page_type_request = (request_context.get("page_type") or "").strip().lower()
+    page_type_rules = [rule for rule in line_item.targeting_rules if rule.target_type == "page_type"]
+    page_type_ok = True if not page_type_rules else any((rule.target_value or "").strip().lower() == page_type_request for rule in page_type_rules)
+    add_check("Page Type", page_type_ok, "Page type targeting does not match the request.")
+
+    slot_position_request = (request_context.get("slot_position") or "").strip().lower()
+    slot_position_rules = [rule for rule in line_item.targeting_rules if rule.target_type == "slot_position"]
+    slot_position_ok = True if not slot_position_rules else any((rule.target_value or "").strip().lower() == slot_position_request for rule in slot_position_rules)
+    add_check("Slot Position", slot_position_ok, "Slot position targeting does not match the request.")
 
     return {
         "eligible": not reasons,

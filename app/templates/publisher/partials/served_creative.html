@@ -1,0 +1,33 @@
+{% set creative = delivery.creative %}
+{% if delivery.render_mode == "html" %}
+<div class="served-creative served-creative-html" data-rendered-creative data-request-id="{{ delivery.request_id }}" data-creative-id="{{ creative.id }}" data-click-url="{{ delivery.click_url }}">
+    <div class="served-creative-label">HTML Creative - {{ creative.size }}</div>
+    <div class="served-creative-html-body">{{ creative.tag_snippet|safe }}</div>
+    {% if delivery.click_url %}
+    <a class="creative-inline-cta" href="{{ delivery.click_url }}">Visit advertiser</a>
+    {% endif %}
+</div>
+{% elif delivery.render_mode == "third_party" %}
+<div class="served-creative served-creative-tag" data-rendered-creative data-request-id="{{ delivery.request_id }}" data-creative-id="{{ creative.id }}">
+    <div class="served-creative-label">Third-Party Tag Placeholder</div>
+    <strong>{{ creative.preview_text or creative.name }}</strong>
+    <p>The mock server selected this creative and rendered a safe placeholder for the external tag.</p>
+    <code>{{ creative.tag_snippet or "<script>third-party placeholder</script>" }}</code>
+    {% if delivery.click_url %}
+    <a class="creative-inline-cta" href="{{ delivery.click_url }}">Open landing page</a>
+    {% endif %}
+</div>
+{% else %}
+<a class="served-creative served-creative-image" data-rendered-creative data-request-id="{{ delivery.request_id }}" data-creative-id="{{ creative.id }}" href="{{ delivery.click_url }}">
+    {% if delivery.image_url %}
+    <img src="{{ delivery.image_url }}" alt="{{ creative.preview_text or creative.name }}" width="{{ delivery.width or '' }}" height="{{ delivery.height or '' }}">
+    {% else %}
+    <div class="served-creative-label">Image Creative - {{ creative.size }}</div>
+    <div class="served-creative-copy">
+        <strong>{{ creative.preview_text or creative.name }}</strong>
+        <span>{{ delivery.order.name }} - {{ delivery.line_item.advertiser.name }}</span>
+    </div>
+    <span class="served-creative-cta">Learn more</span>
+    {% endif %}
+</a>
+{% endif %}

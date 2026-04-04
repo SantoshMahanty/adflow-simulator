@@ -1,4 +1,7 @@
+from collections import Counter
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
+from sqlalchemy.orm import selectinload
 
 from ..models import AdUnit, db
 from ..services import log_activity, login_required
@@ -11,9 +14,35 @@ ad_units_bp = Blueprint("ad_units", __name__, url_prefix="/ad-units")
 @ad_units_bp.route("/")
 @login_required
 def index():
-    ad_units = AdUnit.query.order_by(AdUnit.path.asc()).all()
-    parents = AdUnit.query.filter_by(parent_id=None).order_by(AdUnit.path.asc()).all()
-    return render_template("ad_units/index.html", page_title="Ad Units", ad_units=ad_units, parent_tree=parents)
+    ad_units = AdUnit.query.options(selectinload(AdUnit.placements)).order_by(AdUnit.path.asc()).all()
+    parents = [ad_unit for ad_unit in ad_units if ad_unit.parent_id is None]
+
+    environment_counts = Counter((ad_unit.environment or "Unspecified").title() for ad_unit in ad_units)
+    size_support_counts = Counter(ad_unit.size_support or "Unspecified" for ad_unit in ad_units)
+    linked_units = sum(1 for ad_unit in ad_units if ad_unit.placements)
+    placement_links = sum(len(ad_unit.placements) for ad_unit in ad_units)
+
+    inventory_stats = {
+        "total_units": len(ad_units),
+        "active_units": sum(1 for ad_unit in ad_units if ad_unit.is_active),
+        "root_units": len(parents),
+        "linked_units": linked_units,
+        "placement_links": placement_links,
+        "environment_count": len(environment_counts),
+        "active_rate": round((sum(1 for ad_unit in ad_units if ad_unit.is_active) / len(ad_units)) * 100)
+        if ad_units
+        else 0,
+    }
+
+    return render_template(
+        "ad_units/index.html",
+        page_title="Ad Units",
+        ad_units=ad_units,
+        parent_tree=parents,
+        inventory_stats=inventory_stats,
+        top_environments=environment_counts.most_common(3),
+        top_sizes=size_support_counts.most_common(3),
+    )
 
 
 @ad_units_bp.route("/new", methods=["GET", "POST"])
@@ -72,6 +101,8 @@ def delete(ad_unit_id):
 def populate_ad_unit(ad_unit, form):
     ad_unit.name = form.get("name", "").strip()
     ad_unit.path = form.get("path", "").strip()
+    ad_unit.ad_unit_code = form.get("ad_unit_code", "").strip() or ad_unit.path
+    ad_unit.slot_name = form.get("slot_name", "").strip() or ad_unit.name
     ad_unit.size_support = form.get("size_support", "").strip()
     ad_unit.environment = form.get("environment", "").strip()
     ad_unit.parent_id = parse_int(form.get("parent_id"), None)

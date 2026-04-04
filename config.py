@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
 
@@ -21,10 +22,12 @@ class Config:
     DB_NAME = os.getenv("DB_NAME", "gamsetup")
     DB_USER = os.getenv("DB_USER", "root")
     DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DB_USER_ENCODED = quote_plus(DB_USER)
+    DB_PASSWORD_ENCODED = quote_plus(DB_PASSWORD)
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+        f"mysql+pymysql://{DB_USER_ENCODED}:{DB_PASSWORD_ENCODED}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
     )
 
 

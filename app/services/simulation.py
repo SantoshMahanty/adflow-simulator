@@ -30,7 +30,7 @@ UNIFIED_BONUS = {
 def serialize_candidate(line_item, evaluation):
     targeting_failed = any(
         phrase in " ".join(evaluation["reasons"]).lower()
-        for phrase in ["targeting", "category", "ad unit", "key-value"]
+        for phrase in ["targeting", "category", "ad unit", "key-value", "page type", "slot position"]
     )
     return {
         "id": line_item.id,

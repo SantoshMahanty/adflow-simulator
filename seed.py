@@ -19,6 +19,7 @@ from app.models import (
     LineItemTargeting,
     Order,
     Placement,
+    PublisherSite,
     TroubleshootingIssue,
     TroubleshootingSheetRow,
     User,
@@ -34,8 +35,8 @@ NOW = datetime.now()
 TARGET_COUNTS = {
     "advertisers": 50,
     "orders": 200,
-    "line_items": 800,
-    "creatives": 1200,
+    "line_items": 400,
+    "creatives": 600,
     "ad_units": 94,
     "placements": 50,
     "targeting_keys": 14,
@@ -640,6 +641,8 @@ def add_ad_unit(name: str, path: str, size_support: str, environment: str, paren
     ad_unit = AdUnit(
         name=name,
         path=path,
+        ad_unit_code=path,
+        slot_name=name,
         size_support=size_support,
         environment=environment,
         is_active=True,
@@ -787,6 +790,9 @@ def create_orders(advertisers: list[Advertiser]) -> list[dict]:
                 start_date=start_date,
                 end_date=end_date,
                 status=status,
+                workflow_state=workflow_state_for_seed_status(status),
+                budget_amount=Decimal(str(RNG.randint(150000, 900000))),
+                spent_amount=Decimal("0.00"),
                 notes=f"{objective} order for {environment.upper()} inventory. Managed market: {RNG.choice(['India National', 'Delhi NCR', 'Metro Cities', 'South India'])}.",
                 created_at=created_from_range(start_date - timedelta(days=30), start_date),
             )
@@ -889,7 +895,7 @@ def create_line_items_and_creatives(
         order = order_record["order"]
         order_candidates = candidate_leaf_units(leaf_units, environment, advertiser.vertical)
 
-        for slot_index, scenario in enumerate(scenario_pack):
+        for slot_index, scenario in enumerate(scenario_pack[:2]):
             leaf = RNG.choice(order_candidates)
             size = RNG.choice(leaf["sizes"])
             line_item_type = line_item_type_ladder(environment)[slot_index]
@@ -933,10 +939,17 @@ def create_line_items_and_creatives(
                 device_targeting=device,
                 audience_targeting=audience,
                 status=status,
+                workflow_state=workflow_state_for_seed_status(status),
+                budget_amount=Decimal(str(RNG.randint(25000, 250000))),
+                spent_amount=Decimal("0.00"),
+                daily_impression_cap=RNG.randint(0, 25000),
+                daily_spend_cap=Decimal(str(RNG.choice([0, 1500, 3000, 5000]))),
+                launch_ready=status in {"active", "upcoming"},
                 notes=note_for_line_item(environment, order_record["objective"], scenario, leaf["content_category"], geo_targeting),
                 created_at=created_from_range(order.start_date - timedelta(days=21), start_date),
             )
             line_item.delivered_impressions = delivered_for_scenario(line_item.goal_impressions, scenario)
+            line_item.spent_amount = Decimal(str(round((line_item.delivered_impressions / 1000) * float(line_item.cpm or 0), 2)))
             db.session.add(line_item)
 
             line_item.targeting_rules.append(LineItemTargeting(target_type="ad_unit", target_value=leaf["ad_unit"].path, created_at=random_datetime(120)))
@@ -998,6 +1011,7 @@ def create_line_items_and_creatives(
                     size=creative_size,
                     destination_url=destination,
                     approval_status=approval_status,
+                    asset_url=(f"https://cdn.example.com/{slugify(advertiser.name)}/{creative_index}.jpg" if creative_format in {"display", "image", "native"} else ""),
                     tag_snippet=snippet,
                     preview_text=f"{title_from_slug(slugify(order_record['objective']))} creative for {advertiser.name}",
                     is_active=is_active,
@@ -1026,6 +1040,133 @@ def create_line_items_and_creatives(
 
     db.session.flush()
     return line_item_records, creatives
+
+
+def workflow_state_for_seed_status(status: str) -> str:
+    return {
+        "active": "Live",
+        "paused": "Paused",
+        "upcoming": "Scheduled",
+        "draft": "Draft",
+        "expired": "Completed",
+    }.get(status, "Draft")
+
+
+def create_competing_top_banner_scenario(key_lookup: dict[str, dict[str, KeyValueValue]]) -> None:
+    publisher = PublisherSite(
+        name="AdFlow Times",
+        slug="adflow-times",
+        domain="adflow-times.local",
+        status="active",
+        primary_category="news",
+        created_at=random_datetime(30),
+    )
+    db.session.add(publisher)
+    db.session.flush()
+
+    top_banner = AdUnit(
+        name="Top Banner",
+        path="top_banner",
+        ad_unit_code="top_banner",
+        slot_name="top_banner",
+        size_support="728x90",
+        environment="web",
+        is_active=True,
+        publisher_site_id=publisher.id,
+        created_at=random_datetime(15),
+    )
+    db.session.add(top_banner)
+    db.session.flush()
+
+    placement = Placement(
+        name="Top Banner Competition Pack",
+        device_type="desktop",
+        placement_format="display",
+        notes="Deterministic 5-line-item competition scenario for publisher preview testing.",
+        created_at=random_datetime(10),
+    )
+    placement.ad_units = [top_banner]
+    db.session.add(placement)
+
+    advertiser = Advertiser(
+        name="Top Banner Competitive Test Advertiser",
+        vertical="Technology",
+        status="active",
+        created_at=random_datetime(20),
+    )
+    db.session.add(advertiser)
+    db.session.flush()
+
+    order = Order(
+        advertiser_id=advertiser.id,
+        name="Top Banner Competitive Launch Order",
+        start_date=TODAY - timedelta(days=2),
+        end_date=TODAY + timedelta(days=14),
+        status="active",
+        workflow_state="Live",
+        budget_amount=Decimal("100000.00"),
+        spent_amount=Decimal("0.00"),
+        notes="Seeded order for deterministic auction verification.",
+        created_at=random_datetime(10),
+    )
+    db.session.add(order)
+    db.session.flush()
+
+    cpm_values = [12.00, 9.50, 8.20, 7.00, 6.40]
+    for index, cpm_value in enumerate(cpm_values, start=1):
+        line_item = LineItem(
+            advertiser_id=advertiser.id,
+            order_id=order.id,
+            name=f"Top Banner Live Competitor #{index}",
+            line_item_type="Standard",
+            priority=2,
+            delivery_weight=100 - (index * 5),
+            start_date=TODAY - timedelta(days=1),
+            end_date=TODAY + timedelta(days=10),
+            goal_impressions=150000,
+            delivered_impressions=5000 * index,
+            cpm=Decimal(str(cpm_value)),
+            frequency_cap=5,
+            creative_size="728x90",
+            geo_targeting="delhi_ncr",
+            device_targeting="desktop",
+            audience_targeting="sports_fans",
+            status="live",
+            workflow_state="Live",
+            budget_amount=Decimal("25000.00"),
+            spent_amount=Decimal("0.00"),
+            daily_impression_cap=10000,
+            daily_spend_cap=Decimal("500.00"),
+            launch_ready=True,
+            notes="One of five guaranteed competitors for top_banner.",
+            created_at=random_datetime(10),
+        )
+        db.session.add(line_item)
+        db.session.flush()
+
+        line_item.targeting_rules.append(LineItemTargeting(target_type="ad_unit", target_value="top_banner", created_at=random_datetime(5)))
+        line_item.targeting_rules.append(LineItemTargeting(target_type="page_type", target_value="home", created_at=random_datetime(5)))
+        line_item.targeting_rules.append(LineItemTargeting(target_type="slot_position", target_value="top", created_at=random_datetime(5)))
+        line_item.targeting_rules.append(LineItemTargeting(target_type="content_category", target_value="news", created_at=random_datetime(5)))
+        append_key_value_rule(line_item, key_lookup, "geo", "delhi_ncr")
+        append_key_value_rule(line_item, key_lookup, "device", "desktop")
+        append_key_value_rule(line_item, key_lookup, "audience", "sports_fans")
+        append_key_value_rule(line_item, key_lookup, "inventory_tier", "premium")
+
+        creative = Creative(
+            line_item_id=line_item.id,
+            name=f"Top Banner Winning Test Creative #{index}",
+            creative_format="display",
+            size="728x90",
+            destination_url=f"https://example.com/top-banner/{index}",
+            approval_status="approved",
+            asset_url=f"https://cdn.example.com/top-banner/{index}.jpg",
+            tag_snippet="",
+            preview_text=f"Competing top banner creative #{index}",
+            is_active=True,
+            created_at=random_datetime(5),
+        )
+        db.session.add(creative)
 
 
 def create_issue_templates() -> dict[str, TroubleshootingIssue]:
@@ -1283,6 +1424,7 @@ def main() -> None:
         advertisers = create_advertisers()
         order_records = create_orders(advertisers)
         line_item_records, creatives = create_line_items_and_creatives(order_records, leaf_units, key_lookup)
+        create_competing_top_banner_scenario(key_lookup)
         issue_map = create_issue_templates()
         sheet_rows = create_sheet_rows(issue_map, line_item_records)
         db.session.commit()

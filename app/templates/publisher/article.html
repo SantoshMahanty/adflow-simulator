@@ -1,0 +1,58 @@
+{% extends "publisher/base.html" %}
+
+{% block publisher_content %}
+{% set top_slots = slots|selectattr('position', 'equalto', 'top')|list %}
+{% set in_article_slots = slots|selectattr('position', 'equalto', 'in_article')|list %}
+{% set sidebar_slots = slots|selectattr('position', 'equalto', 'sidebar')|list %}
+{% set video_slots = slots|selectattr('position', 'equalto', 'video')|list %}
+
+<article class="publisher-article-shell">
+    <header class="publisher-article-header">
+        <div class="page-intro-kicker">{{ article.category|title }} · {{ article.author }}</div>
+        <h1>{{ article.title }}</h1>
+        <p>{{ article.summary }}</p>
+    </header>
+
+    {% for slot in top_slots %}
+    {% include "publisher/partials/slot.html" %}
+    {% endfor %}
+
+    <div class="publisher-article-grid">
+        <div class="publisher-article-body">
+            {% for paragraph in article.body %}
+            <p>{{ paragraph }}</p>
+            {% if loop.index == 2 and in_article_slots %}
+                {% for slot in in_article_slots %}
+                {% include "publisher/partials/slot.html" %}
+                {% endfor %}
+            {% endif %}
+            {% endfor %}
+        </div>
+        <aside class="publisher-rail">
+            {% for slot in sidebar_slots %}
+            {% include "publisher/partials/slot.html" %}
+            {% endfor %}
+            <section class="publisher-module">
+                <div class="panel-kicker">Serving Notes</div>
+                <h3>Article context</h3>
+                <p>Try targeting page type `article`, slot position `in_article`, and content category `{{ article.category }}` to watch delivery narrow correctly.</p>
+            </section>
+        </aside>
+    </div>
+</article>
+
+{% if video_slots %}
+<section class="panel">
+    <div class="panel-header"><div><div class="panel-kicker">Video Pod</div><h2>Preroll Placeholder</h2></div></div>
+    {% for slot in video_slots %}
+    {% include "publisher/partials/slot.html" %}
+    {% endfor %}
+</section>
+{% endif %}
+
+<section class="publisher-footer-slots">
+    {% for slot in slots if slot.position in ['footer', 'anchor'] %}
+    {% include "publisher/partials/slot.html" %}
+    {% endfor %}
+</section>
+{% endblock %}

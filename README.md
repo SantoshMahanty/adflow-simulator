@@ -1,483 +1,670 @@
 # AdFlow Admin Simulator
 
-AdFlow Admin Simulator is a student-friendly Flask project that mimics a simplified ad operations platform, inspired by tools like Google Ad Manager (GAM) and DV360.
+AdFlow Admin Simulator is a beginner-friendly Flask + MySQL project that behaves like a small ad operations platform.
 
-It is useful for learning how ad tech platforms are structured, how admin dashboards are organized, and how auction or eligibility logic can be modeled in code.
+It has two connected parts:
 
-## What Students Can Learn
+1. An admin dashboard where you create advertisers, orders, line items, creatives, ad units, placements, and targeting rules.
+2. A mock publisher website where those records are actually used to request ads, pick a winner, render the creative, and log impressions and clicks.
 
-This project is a good practice app for understanding:
+This means the project is not just CRUD. You can follow the full story from setup to delivery.
 
-- Flask application structure with blueprints
-- SQLAlchemy models and database relationships
-- Jinja template rendering
-- CRUD flows for admin panels
-- Authentication with session-based login
-- Ad tech concepts such as advertisers, orders, line items, creatives, ad units, placements, targeting, and auctions
-- Business-rule evaluation in Python
+## 1. What This Project Is Teaching You
 
-## Project Features
+If you are very new, this project helps you practice these ideas in one place:
 
-- Dashboard overview
-- Advertiser, order, line item, creative, ad unit, and placement management
-- Key-value targeting setup
-- Waterfall auction simulation
-- Unified auction simulation
-- Troubleshooting issues library
-- Internal troubleshooting sheet with CSV export
-- Reporting views
+- how a Flask app is structured
+- how routes, templates, and services work together
+- how SQLAlchemy models represent database tables
+- how login works with sessions
+- how admin forms save data into MySQL
+- how business rules are written in Python
+- how ad-tech concepts like targeting, eligibility, auctions, impressions, and clicks work
 
-## Tech Stack
+## 2. Ad-Tech Words in Simple English
 
-- Python
-- Flask
-- MySQL
-- SQLAlchemy
-- Jinja2
-- HTML, CSS, and Vanilla JavaScript
+These words show up all over the project:
 
-## Python Packages Used
+- `Advertiser`: the brand or client
+- `Order`: a campaign under that advertiser
+- `Line Item`: the delivery rules for a campaign
+- `Creative`: the actual ad asset that gets shown
+- `Ad Unit`: the place on the page where an ad can appear
+- `Placement`: a group of ad units
+- `Targeting`: rules like geo, device, page type, slot position, audience, and key-values
+- `Auction`: the logic that decides which eligible line item wins
+- `Impression`: logged when the ad is viewed
+- `Click`: logged when the user clicks the ad
 
-The main packages listed in `requirements.txt` are:
+## 3. Project Structure
 
-- `Flask==3.1.0`
-  Main web framework used to build routes, handle requests, manage sessions, and render templates.
-
-- `Flask-SQLAlchemy==3.1.1`
-  Adds SQLAlchemy integration to Flask. It is used for defining models, relationships, and database queries.
-
-- `PyMySQL==1.1.1`
-  MySQL database driver used by SQLAlchemy to connect the Flask app to MySQL.
-
-- `python-dotenv==1.0.1`
-  Loads values from `.env` into environment variables so database credentials and secrets do not need to be hardcoded.
-
-## What Each Package Does in This Project
-
-- `Flask`
-  Runs the application server, connects URLs to Python functions, supports sessions for login, and renders the Jinja HTML templates.
-
-- `Flask-SQLAlchemy`
-  Manages tables like advertisers, orders, line items, creatives, ad units, placements, troubleshooting records, and simulation history.
-
-- `PyMySQL`
-  Makes the MySQL connection string in `config.py` work with SQLAlchemy.
-
-- `python-dotenv`
-  Reads values such as `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `SECRET_KEY` from the `.env` file during startup.
-
-## Project Structure
+This is the main folder layout:
 
 ```text
 adflow_admin_simulator/
-  app/
-    models/        # Database models
-    routes/        # Flask blueprints and page routes
-    services/      # Business logic such as eligibility and simulation
-    static/        # CSS and JavaScript
-    templates/     # Jinja HTML templates
-  config.py        # App configuration
-  run.py           # App entry point
-  seed.py          # Demo data loader
-  requirements.txt # Python dependencies
-  README.md
+|-- app/
+|   |-- __init__.py
+|   |-- models/
+|   |-- routes/
+|   |-- services/
+|   |-- static/
+|   `-- templates/
+|-- config.py
+|-- run.py
+|-- seed.py
+|-- seed_test_auction.py
+|-- verify_test_auction_flow.py
+`-- requirements.txt
 ```
 
-## Application Packages and Their Functionalities
-
-The `app/` folder is the main package of the project. It is split into smaller packages so the code stays organized.
-
-### `app/__init__.py`
-
-This is the Flask app factory.
-
-It is responsible for:
-
-- creating the Flask application
-- loading config values
-- initializing the database
-- registering all blueprints
-- loading the logged-in user before each request
-- registering error pages
-
-### `app/models/`
-
-This package contains the database schema using SQLAlchemy models.
-
-Important models:
-
-- `user.py`
-  Stores admin users and supports login/password checking.
-
-- `advertiser.py`
-  Represents the advertiser or client.
-
-- `order.py`
-  Represents a campaign order under an advertiser.
-
-- `line_item.py`
-  Stores delivery logic such as priority, CPM, targeting, dates, size, and status.
-
-- `creative.py`
-  Stores ad creative details such as format, size, approval status, and activity state.
-
-- `ad_unit.py`
-  Represents ad inventory locations where ads can serve.
-
-- `placement.py`
-  Groups multiple ad units together.
-
-- `key_value.py`
-  Stores key-value targeting configuration and line item targeting rules.
-
-- `auction.py`
-  Stores saved auction simulation runs and winners.
-
-- `troubleshooting.py`
-  Stores troubleshooting issue templates and troubleshooting sheet rows.
-
-- `activity.py`
-  Stores activity log events like create, update, delete, and simulation actions.
-
-### `app/routes/`
-
-This package contains Flask blueprints and page-level request handling.
-
-Important route modules:
-
-- `auth.py`
-  Login and logout flows.
-
-- `dashboard.py`
-  Home dashboard and settings page.
-
-- `advertisers.py`
-  Advertiser listing, detail pages, and form actions.
-
-- `orders.py`
-  Order listing, creation, editing, and detail views.
-
-- `line_items.py`
-  Line item listing, filters, create/edit/delete actions, and detail evaluation.
-
-- `creatives.py`
-  Creative management flows.
-
-- `ad_units.py`
-  Ad unit creation and listing.
-
-- `placements.py`
-  Placement creation and inventory grouping.
-
-- `key_values.py`
-  Key-value setup for targeting.
-
-- `simulator.py`
-  Auction simulator form, simulation execution, and simulation history.
-
-- `troubleshooting.py`
-  Troubleshooting issue library and troubleshooting sheet workflows.
-
-- `reports.py`
-  Reporting dashboard that summarizes delivery, simulations, and issue categories.
-
-### `app/services/`
-
-This package contains reusable business logic that is separate from the route handlers.
-
-Important service modules:
-
-- `auth.py`
-  Authentication helpers and `login_required`.
-
-- `dashboard.py`
-  Dashboard summary calculations.
-
-- `eligibility.py`
-  Core business rules for checking whether a line item is eligible to serve.
-
-- `simulation.py`
-  Waterfall and unified auction logic.
-
-- `reporting.py`
-  Reporting aggregation logic.
-
-- `activity.py`
-  Logging helper for activity records.
-
-- `helpers.py`
-  Shared parsing helpers such as integer, decimal, and date conversion.
-
-### `app/templates/`
-
-Contains all Jinja HTML templates used to render pages.
-
-Main template groups:
-
-- `auth/`
-- `dashboard/`
-- `advertisers/`
-- `orders/`
-- `line_items/`
-- `creatives/`
-- `ad_units/`
-- `placements/`
-- `key_values/`
-- `simulator/`
-- `troubleshooting/`
-- `reports/`
-- `partials/`
-- `errors/`
-
-### `app/static/`
-
-Contains front-end assets:
-
-- `css/styles.css`
-  Main styling for the dashboard UI.
-
-- `js/app.js`
-  Front-end interactions and page behavior.
-
-### Top-level Files
-
-- `config.py`
-  Loads environment variables and database configuration.
+What each top-level part does:
 
 - `run.py`
-  Starts the Flask app.
-
+  Starts the Flask server.
+- `config.py`
+  Loads environment variables like DB host, DB name, DB user, and secret key.
+- `app/__init__.py`
+  Creates the Flask app, connects the database, registers routes, and runs startup bootstrap logic.
+- `app/models/`
+  Database tables live here.
+- `app/routes/`
+  URL endpoints and page handling live here.
+- `app/services/`
+  Reusable business logic lives here.
+- `app/templates/`
+  HTML pages live here.
+- `app/static/`
+  CSS and JavaScript live here.
 - `seed.py`
-  Creates tables and inserts demo data for learning and testing.
+  Inserts demo data so the app is usable immediately.
+- `seed_test_auction.py`
+  Creates a clean deterministic auction fixture for learning and testing.
+- `verify_test_auction_flow.py`
+  Runs an end-to-end check of the auction flow in code.
 
-- `requirements.txt`
-  Lists Python package dependencies.
+## 4. Which File Is Responsible for Which Feature
 
-## Before You Start
+This is the most important section if you are learning the codebase.
 
-Make sure you have:
+### App startup
 
-- Python 3.11+ installed
-- MySQL installed and running
-- A database user that can create and update tables
+- `run.py`
+  This is the file you run with `python run.py`.
+- `app/__init__.py`
+  This is where the Flask app is created.
+  It also:
+  - loads config
+  - initializes SQLAlchemy
+  - registers blueprints
+  - loads the logged-in user before requests
+  - creates tables on startup
+  - runs schema/bootstrap helpers
+- `config.py`
+  Builds the database connection string from `.env`.
 
-## Create the Database
+### Login and logout
 
-Run this in MySQL:
+- `app/routes/auth.py`
+  Handles `/auth/login` and `/auth/logout`.
+- `app/services/auth.py`
+  Contains helper logic for authentication and current-user lookup.
+- `app/models/user.py`
+  Stores admin users and password logic.
+- `app/templates/auth/login.html`
+  Login page UI.
+
+### Dashboard
+
+- `app/routes/dashboard.py`
+  Handles the dashboard pages.
+- `app/services/dashboard.py`
+  Builds dashboard summary data.
+- `app/templates/dashboard/index.html`
+  Dashboard page.
+- `app/templates/dashboard/settings.html`
+  Settings page.
+
+### Advertisers
+
+- `app/routes/advertisers.py`
+  Advertiser pages and form handling.
+- `app/models/advertiser.py`
+  Advertiser table.
+- `app/templates/advertisers/`
+  Advertiser UI pages.
+
+### Orders
+
+- `app/routes/orders.py`
+  Order pages and form handling.
+- `app/models/order.py`
+  Order table.
+- `app/templates/orders/`
+  Order UI pages.
+
+### Line items
+
+- `app/routes/line_items.py`
+  Main place for line item create, edit, detail, delete, filtering, and targeting sync.
+- `app/models/line_item.py`
+  Line item database table and targeting relationships.
+- `app/services/eligibility.py`
+  Core eligibility checks used to decide whether a line item can serve.
+- `app/services/launch.py`
+  Launch readiness and workflow-state helpers.
+- `app/templates/line_items/`
+  Line item UI pages.
+
+If you want to understand "why did this line item pass or fail?", read these files first:
+
+- `app/routes/line_items.py`
+- `app/services/eligibility.py`
+
+### Creatives
+
+- `app/routes/creatives.py`
+  Creative pages and form handling.
+- `app/models/creative.py`
+  Creative table.
+- `app/templates/creatives/`
+  Creative UI pages.
+
+### Ad units and placements
+
+- `app/routes/ad_units.py`
+  Ad unit pages.
+- `app/routes/placements.py`
+  Placement pages.
+- `app/models/ad_unit.py`
+  Ad unit table.
+- `app/models/placement.py`
+  Placement table.
+- `app/templates/ad_units/`
+  Ad unit UI pages.
+- `app/templates/placements/`
+  Placement UI pages.
+
+### Key-values and targeting rules
+
+- `app/routes/key_values.py`
+  Key-value management screens.
+- `app/models/key_value.py`
+  Key-value tables.
+- `app/routes/line_items.py`
+  Applies key-values to line items through targeting rules.
+
+### Auction simulator
+
+- `app/routes/simulator.py`
+  Handles the simulator form and simulator result pages.
+- `app/services/simulation.py`
+  Contains the waterfall and unified auction logic used by the simulator.
+- `app/templates/simulator/`
+  Simulator UI pages.
+- `app/models/auction.py`
+  Stores saved simulation history.
+
+### Live publisher pages
+
+- `app/routes/publisher.py`
+  Handles publisher pages, ad requests, creative preview, impression logging, and click tracking.
+- `app/services/ad_server.py`
+  Creates mock publisher slots, articles, placements, and helper data for the publisher site.
+- `app/services/auction_engine.py`
+  Runs the live request auction and stores request-level delivery data.
+- `app/templates/publisher/`
+  Publisher pages and ad slot partials.
+- `app/static/js/publisher.js`
+  Front-end code for publisher slot behavior.
+- `app/models/publisher.py`
+  Publisher site table.
+- `app/models/delivery.py`
+  Delivery, impression, click, and request tracking models.
+
+If you want to understand "how does a page request an ad and get a winner?", read these files first:
+
+- `app/routes/publisher.py`
+- `app/services/ad_server.py`
+- `app/services/auction_engine.py`
+
+### Auction logs and diagnostics
+
+- `app/routes/auctions.py`
+  Shows stored ad requests and detailed diagnostics.
+- `app/templates/auctions/`
+  Auction logs UI.
+- `app/services/auction_engine.py`
+  Builds the request-level debug data.
+
+### Reports
+
+- `app/routes/reports.py`
+  Reports page and CSV export.
+- `app/services/reporting.py`
+  Aggregates totals, summaries, failures, and export rows.
+- `app/templates/reports/index.html`
+  Reports page UI.
+
+### Troubleshooting module
+
+- `app/routes/troubleshooting.py`
+  Troubleshooting issue library and troubleshooting sheet pages.
+- `app/models/troubleshooting.py`
+  Troubleshooting-related tables.
+- `app/templates/troubleshooting/`
+  Troubleshooting UI.
+
+### Activity logging
+
+- `app/services/activity.py`
+  Logs create, update, delete, and simulation actions.
+- `app/models/activity.py`
+  Activity log table.
+
+### API endpoints
+
+- `app/routes/api.py`
+  JSON endpoints for advertisers, orders, line items, creatives, line item launch, and report data.
+
+## 5. Important Models
+
+If you are learning the database structure, start with these:
+
+- `app/models/user.py`
+- `app/models/advertiser.py`
+- `app/models/order.py`
+- `app/models/line_item.py`
+- `app/models/creative.py`
+- `app/models/ad_unit.py`
+- `app/models/placement.py`
+- `app/models/key_value.py`
+- `app/models/auction.py`
+- `app/models/delivery.py`
+- `app/models/publisher.py`
+- `app/models/troubleshooting.py`
+
+## 6. How the App Starts When You Run It
+
+When you run:
+
+```powershell
+python run.py
+```
+
+this is what happens:
+
+1. `run.py` imports `create_app()` from `app/__init__.py`.
+2. `app/__init__.py` creates the Flask app.
+3. `config.py` loads environment variables from `.env`.
+4. SQLAlchemy is initialized.
+5. All route blueprints are registered.
+6. On startup, the app runs:
+   - `db.create_all()`
+   - `ensure_runtime_schema()`
+   - `bootstrap_mock_publisher_inventory()`
+7. The server starts on `http://127.0.0.1:5000`.
+
+## 7. How to Run the Project for the First Time
+
+### Step 1. Make sure you have these installed
+
+- Python 3.11 or newer
+- MySQL running locally
+
+### Step 2. Create the database
+
+Run this inside MySQL:
 
 ```sql
 CREATE DATABASE gamsetup CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-## Environment Variables
+### Step 3. Configure `.env`
 
-The project includes a local `.env` file and `.env.example`.
+Copy `.env.example` to `.env`.
 
-Default local settings:
+Example values:
 
 ```text
+SECRET_KEY=change-this-secret-key
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=gamsetup
 DB_USER=root
 DB_PASSWORD=root
-DB_NAME=gamsetup
 ```
 
-If your MySQL setup is different, update the `.env` file.
+### Step 4. Create a virtual environment
 
-## Installation
+PowerShell:
 
-1. Create a virtual environment:
-
-```bash
+```powershell
 python -m venv .venv
-```
-
-2. Activate it:
-
-Windows PowerShell:
-
-```bash
 .venv\Scripts\Activate.ps1
 ```
 
-Windows Command Prompt:
+Command Prompt:
 
-```bash
+```cmd
+python -m venv .venv
 .venv\Scripts\activate
 ```
 
-3. Install dependencies:
+### Step 5. Install Python packages
 
-```bash
+```powershell
 pip install -r requirements.txt
 ```
 
-4. Seed the database with demo data:
+### Step 6. Seed demo data
 
-```bash
+```powershell
 python seed.py
 ```
 
-## Run the App
+This creates demo records and the default admin user.
 
-Start the Flask server:
+### Step 7. Start the server
 
-```bash
+```powershell
 python run.py
 ```
 
-Then open:
+Open this in your browser:
 
 [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
-## Default Login
+### Step 8. Log in
 
 - Email: `admin@adflow.local`
 - Password: `Admin@123`
 
-## How the Data Model Works
+## 8. Beginner Manual Testing Guide
 
-The app roughly follows this ad-tech flow:
+If you want to test the app feature by feature in the browser, follow this order.
 
-1. An `Advertiser` represents the client or brand.
-2. An `Order` groups campaign work for that advertiser.
-3. A `Line Item` defines delivery rules such as dates, pricing, targeting, and priority.
-4. A `Creative` is the ad asset that can serve for a line item.
-5. An `Ad Unit` represents inventory on the site or app.
-6. A `Placement` groups ad units together.
-7. The simulator checks which line items are eligible for a given request and decides a winner.
+### Test 1. Login
 
-## Available Features
+1. Open `/auth/login`
+2. Log in using the default admin account
+3. Confirm the dashboard opens
 
-Below is a more detailed list of what students can explore inside the app.
+Main files:
 
-### 1. Authentication
+- `app/routes/auth.py`
+- `app/services/auth.py`
+- `app/templates/auth/login.html`
 
-- Admin login page
-- Session-based user authentication
-- Logout support
-- Route protection using `login_required`
+### Test 2. Create an advertiser
 
-### 2. Dashboard
+1. Open the Advertisers page
+2. Create a new advertiser
+3. Confirm it appears in the advertiser list and detail page
 
-- Summary cards and overview data
-- Quick navigation into different admin areas
-- Settings view with high-level counts
+Main files:
 
-### 3. Advertiser Management
+- `app/routes/advertisers.py`
+- `app/models/advertiser.py`
+- `app/templates/advertisers/`
 
-- Create advertisers
-- View advertiser details
-- Track advertiser status and vertical
-- See related orders and line items
+### Test 3. Create an order
 
-### 4. Order Management
+1. Open the Orders page
+2. Create an order under your advertiser
+3. Make sure the dates include today
 
-- Create and edit orders
-- Connect orders to advertisers
-- Set order-level date ranges and status
-- View order details
+Main files:
 
-### 5. Line Item Management
+- `app/routes/orders.py`
+- `app/models/order.py`
+- `app/templates/orders/`
 
-- Create, edit, delete, and view line items
-- Set line item priority and type
-- Configure CPM and delivery goals
-- Define start and end dates
-- Set size, geo, device, and audience targeting
-- Attach key-value targeting
-- Assign ad unit targeting
-- Check line item eligibility on detail and list pages
-- Filter line items by advertiser, type, status, date, geo, and device
+### Test 4. Create a line item
 
-### 6. Creative Management
+1. Open the Line Items page
+2. Create a line item under the order
+3. Set:
+   - status to active
+   - workflow state to Live
+   - matching creative size
+   - matching targeting values
+4. Save and open the detail page
+5. Check the eligibility section
 
-- Create and edit creatives
-- Link creatives to line items
-- Store format, size, approval status, and destination URL
-- Mark creatives active or inactive
+Main files:
 
-### 7. Inventory Management
+- `app/routes/line_items.py`
+- `app/services/eligibility.py`
+- `app/services/launch.py`
+- `app/templates/line_items/`
 
-- Create and list ad units
-- Define inventory paths
-- Group ad units into placements
-- View how placements map to ad inventory
+### Test 5. Create a creative
 
-### 8. Targeting Setup
+1. Open the Creatives page
+2. Create a creative linked to the line item
+3. Make sure:
+   - it is active
+   - approval status is approved
+   - size matches the slot
 
-- Create key-value keys
-- Create key-value values
-- Attach key-value rules to line items
-- Simulate request matching based on request metadata
+Main files:
 
-### 9. Auction Simulator
+- `app/routes/creatives.py`
+- `app/models/creative.py`
+- `app/templates/creatives/`
 
-- Run a waterfall simulation
-- Run a unified auction simulation
-- Input request context such as ad unit, geo, device, audience, size, and key-values
-- View candidate demand
-- Inspect eligibility outcomes
-- See the winner and rejection reasons
-- Save simulation history to the database
+### Test 6. Open publisher pages
 
-### 10. Troubleshooting Module
+1. Open `/publisher/home`
+2. Open `/publisher/article/1`
+3. Open `/publisher/category/technology`
+4. Watch slots request ads
 
-- Browse common issue types
-- Maintain a troubleshooting sheet
-- Use stored troubleshooting records for learning and review
-- Export troubleshooting sheet data as CSV
+Main files:
 
-### 11. Reporting
+- `app/routes/publisher.py`
+- `app/services/ad_server.py`
+- `app/static/js/publisher.js`
+- `app/templates/publisher/`
 
-- View aggregate counts across advertisers, orders, line items, and simulations
-- See line item status summaries
-- Review issue category distribution
-- Review advertiser activity summaries
-- Analyze simulation outcomes and failure reasons
+### Test 7. Use the auction test page
 
-### 12. Activity Logging
+Open:
 
-- Records important actions in the app
-- Useful for understanding admin workflows and audit-style tracking
+`/publisher/test-auction?debug=1`
 
-## Important Files for Students
+This page is useful because it isolates one slot and shows debugging information more clearly.
 
-- `app/__init__.py`: Flask app factory and blueprint registration
-- `app/models/`: SQLAlchemy models
-- `app/routes/`: Page handlers and form processing
-- `app/services/eligibility.py`: Line item eligibility logic
-- `app/services/simulation.py`: Waterfall and unified auction logic
-- `seed.py`: Demo dataset creation
+Main files:
 
-## Suggested Learning Path
+- `app/routes/publisher.py`
+- `app/services/test_auction_fixture.py`
+- `app/templates/publisher/test_auction.html`
 
-If you are studying this project for practice, a good reading order is:
+### Test 8. Check auction logs
+
+1. After a publisher page requests an ad, open `/auctions/`
+2. Open a request detail page
+3. Confirm you can see candidate decisions, winner details, and failure reasons
+
+Main files:
+
+- `app/routes/auctions.py`
+- `app/services/auction_engine.py`
+- `app/templates/auctions/`
+
+### Test 9. Check reports
+
+1. Open `/reports/`
+2. Change filters if needed
+3. Export CSV from `/reports/export`
+
+Main files:
+
+- `app/routes/reports.py`
+- `app/services/reporting.py`
+- `app/templates/reports/index.html`
+
+## 9. Best End-to-End Learning Flow
+
+If you want to understand the whole product, do this:
+
+1. Log in.
+2. Create an advertiser.
+3. Create an order.
+4. Create a line item.
+5. Create a creative.
+6. Make sure the creative size and targeting match a publisher slot.
+7. Open a publisher page.
+8. Let the page request an ad.
+9. Open auction logs.
+10. Check reports.
+
+This teaches you how admin data becomes live delivery behavior.
+
+## 10. Automated Test and Verification Scripts
+
+Besides manual browser testing, this repo has two useful scripts.
+
+### `seed_test_auction.py`
+
+Run:
+
+```powershell
+python seed_test_auction.py
+```
+
+What it does:
+
+- creates a deterministic 5-line-item auction fixture
+- creates a clean test publisher slot
+- creates the admin login if missing
+- prints the test page URL and seeded line items
+
+Main files behind it:
+
+- `seed_test_auction.py`
+- `app/services/test_auction_fixture.py`
+
+### `verify_test_auction_flow.py`
+
+Run:
+
+```powershell
+python verify_test_auction_flow.py
+```
+
+What it checks:
+
+- the publisher test page loads
+- the slot makes a live ad request
+- exactly five seeded line items are evaluated
+- the expected winner is selected
+- impression logging works
+- click logging works
+- diagnostics data is correct
+- no-fill fallback works when targeting does not match
+
+Main files behind it:
+
+- `verify_test_auction_flow.py`
+- `app/services/test_auction_fixture.py`
+- `app/routes/publisher.py`
+- `app/services/auction_engine.py`
+
+## 11. Useful URLs While Learning
+
+- `/auth/login`
+- `/`
+- `/line-items/`
+- `/creatives/`
+- `/simulator/`
+- `/publisher/home`
+- `/publisher/test-auction?debug=1`
+- `/auctions/`
+- `/reports/`
+
+## 12. JSON/API Endpoints
+
+These are code-driven endpoints, useful if you want to test with Postman or JavaScript later:
+
+- `POST /advertisers`
+- `POST /orders`
+- `POST /line-items`
+- `POST /creatives`
+- `POST /launch-line-item`
+- `GET /delivery/report`
+- `GET /serve-ad`
+- `GET /publisher/ad`
+
+These are handled in:
+
+- `app/routes/api.py`
+- `app/routes/publisher.py`
+
+## 13. Recommended Reading Order for a New Student
+
+If you want to read the code without getting lost, use this order:
 
 1. `run.py`
-2. `app/__init__.py`
-3. `config.py`
-4. `app/models/`
-5. `app/routes/auth.py`
-6. `app/routes/dashboard.py`
-7. `app/routes/line_items.py`
-8. `app/services/eligibility.py`
-9. `app/services/simulation.py`
-10. `seed.py`
+2. `config.py`
+3. `app/__init__.py`
+4. `app/models/__init__.py`
+5. `app/models/user.py`
+6. `app/routes/auth.py`
+7. `app/routes/dashboard.py`
+8. `app/routes/line_items.py`
+9. `app/services/eligibility.py`
+10. `app/routes/simulator.py`
+11. `app/services/simulation.py`
+12. `app/routes/publisher.py`
+13. `app/services/ad_server.py`
+14. `app/services/auction_engine.py`
+15. `app/routes/reports.py`
+16. `app/services/reporting.py`
+17. `seed.py`
+18. `verify_test_auction_flow.py`
 
-## Notes
+## 14. Common Beginner Questions
 
-- `seed.py` is idempotent, which means you can run it again without dropping the full database.
-- App tables use the `adflow_` prefix so they can live inside a shared database.
-- The app uses `db.create_all()` for local setup instead of migrations.
-- Simulation runs are saved in the `adflow_auction_simulations` table.
+### Where does the server start?
 
-## Possible Student Improvements
+`run.py`
 
-Good next steps if you want to practice enhancing the project:
+### Where is the Flask app created?
 
-- Add form validation with Flask-WTF
-- Add CSRF protection
-- Add pagination to large list pages
-- Add pytest tests for eligibility and simulation logic
-- Improve filtering and reporting
-- Make simulator date/time behavior fully configurable
+`app/__init__.py`
+
+### Where are the database tables defined?
+
+Inside `app/models/`
+
+### Where are page URLs handled?
+
+Inside `app/routes/`
+
+### Where is the business logic?
+
+Inside `app/services/`
+
+### Where is the HTML?
+
+Inside `app/templates/`
+
+### Where is the CSS and JavaScript?
+
+- `app/static/css/styles.css`
+- `app/static/js/app.js`
+- `app/static/js/publisher.js`
+
+### Where is the live auction logic?
+
+- `app/services/auction_engine.py`
+- `app/services/eligibility.py`
+- `app/services/simulation.py`
+
+## 15. Notes
+
+- This project expects a local MySQL database.
+- It is built for learning and local development.
+- The app uses `db.create_all()` on startup, which is okay for a learning project but not the same as a production migration system.

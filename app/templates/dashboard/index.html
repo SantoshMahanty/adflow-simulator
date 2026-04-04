@@ -55,8 +55,19 @@
         <div class="chart" data-chart="donut" data-series='{{ dashboard.issue_breakdown|tojson }}'></div>
     </article>
     <article class="panel">
-        <div class="panel-header"><div><div class="panel-kicker">Auctioning</div><h2>Auction Results</h2></div></div>
-        <div class="chart" data-chart="bar" data-series='{{ dashboard.auction_chart|tojson }}'></div>
+        <div class="panel-header"><div><div class="panel-kicker">Auctioning</div><h2>Publisher Slot Performance</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ dashboard.slot_performance|tojson }}'></div>
+    </article>
+</section>
+
+<section class="panel-row">
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Losses</div><h2>Lost Auction Reasons</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ dashboard.loss_reason_breakdown|tojson }}'></div>
+    </article>
+    <article class="panel">
+        <div class="panel-header"><div><div class="panel-kicker">Live Demand</div><h2>Active Line Items by Ad Unit</h2></div></div>
+        <div class="chart" data-chart="bar" data-series='{{ dashboard.active_by_ad_unit|tojson }}'></div>
     </article>
 </section>
 
@@ -87,6 +98,43 @@
                 </tr>
                 {% else %}
                 <tr><td colspan="4" class="empty-state">No recent activity yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Live Traffic</div>
+            <h2>Recent Auction Requests</h2>
+        </div>
+    </div>
+    <div class="table-wrap table-scroll">
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th>Slot</th>
+                    <th>Winner</th>
+                    <th>Render</th>
+                    <th>Impression</th>
+                    <th>Click</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in dashboard.recent_requests %}
+                <tr>
+                    <td><a href="{{ url_for('auctions.detail', request_id=item.request_id) }}">{{ item.request_id[:12] }}</a></td>
+                    <td>{{ item.slot_id }}</td>
+                    <td>{{ item.winning_line_item.name if item.winning_line_item else 'House / Empty' }}</td>
+                    <td>{{ item.render_status }}</td>
+                    <td>{{ 'Yes' if item.impression_logged else 'No' }}</td>
+                    <td>{{ 'Yes' if item.click_logged else 'No' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No live publisher requests yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

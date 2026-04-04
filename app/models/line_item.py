@@ -21,6 +21,7 @@ class LineItem(db.Model):
     name = db.Column(db.String(180), nullable=False)
     line_item_type = db.Column(db.String(60), nullable=False)
     priority = db.Column(db.Integer, nullable=False, default=6)
+    delivery_weight = db.Column(db.Integer, nullable=False, default=100)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     goal_impressions = db.Column(db.Integer, nullable=False, default=0)
@@ -32,6 +33,13 @@ class LineItem(db.Model):
     device_targeting = db.Column(db.String(255))
     audience_targeting = db.Column(db.String(255))
     status = db.Column(db.String(50), nullable=False, default="draft")
+    workflow_state = db.Column(db.String(50), nullable=False, default="Draft")
+    budget_amount = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    spent_amount = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    daily_impression_cap = db.Column(db.Integer, nullable=False, default=0)
+    daily_spend_cap = db.Column(db.Numeric(12, 2), nullable=False, default=Decimal("0.00"))
+    launch_ready = db.Column(db.Boolean, nullable=False, default=False)
+    last_launched_at = db.Column(db.DateTime)
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
@@ -45,6 +53,8 @@ class LineItem(db.Model):
         order_by="LineItemTargeting.target_type",
     )
     simulations = db.relationship("AuctionSimulation", back_populates="winner_line_item", passive_deletes=True)
+    auction_candidates = db.relationship("AuctionCandidate", back_populates="line_item")
+    winning_requests = db.relationship("AdRequest", back_populates="winning_line_item", foreign_keys="AdRequest.winning_line_item_id")
     troubleshooting_rows = db.relationship(
         "TroubleshootingSheetRow",
         back_populates="line_item",
@@ -60,6 +70,10 @@ class LineItem(db.Model):
     @property
     def remaining_goal(self):
         return max(self.goal_impressions - self.delivered_impressions, 0)
+
+    @property
+    def remaining_budget(self):
+        return max(float(self.budget_amount or 0) - float(self.spent_amount or 0), 0)
 
     @property
     def targeting_summary(self):

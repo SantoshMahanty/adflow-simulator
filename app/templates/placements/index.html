@@ -1,29 +1,157 @@
 {% extends "base.html" %}
 
+{% set cards = [
+    {'label': 'Placements', 'value': placement_stats.total_placements},
+    {'label': 'Ad Unit Links', 'value': placement_stats.ad_unit_links},
+    {'label': 'Unique Ad Units', 'value': placement_stats.unique_ad_units},
+    {'label': 'Formats in Use', 'value': placement_stats.format_count}
+] %}
+
 {% block content %}
+<section class="page-intro inventory-hero inventory-hero-warm">
+    <div>
+        <div class="page-intro-kicker">Inventory Workspace</div>
+        <h2>Bundle supply into placements built for trafficking speed</h2>
+        <p>Review device mix, format coverage, and linked ad units in a denser layout that keeps placement planning readable at a glance.</p>
+    </div>
+    <div class="page-intro-meta">
+        <span class="metric-pill healthy">{{ placement_stats.unique_ad_units }} unique units covered</span>
+        <span class="metric-pill neutral">{{ placement_stats.device_count }} device groups</span>
+    </div>
+</section>
+
+{% include "partials/stat_cards.html" %}
+
+<section class="panel-row">
+    <article class="panel hero-panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Placement Mix</div>
+                <h2>Device footprint</h2>
+            </div>
+            <a class="primary-button" href="{{ url_for('placements.create') }}">Add Placement</a>
+        </div>
+        <div class="inventory-stack">
+            {% for device, count in device_breakdown %}
+            {% set device_share = ((count / placement_stats.total_placements) * 100) if placement_stats.total_placements else 0 %}
+            <div class="inventory-signal-card">
+                <div class="inventory-signal-head">
+                    <strong>{{ device }}</strong>
+                    <span>{{ count }} placements</span>
+                </div>
+                <div class="inventory-progress"><span style="width: {{ device_share }}%"></span></div>
+                <p>{{ device_share|round(0)|int }}% of active placement definitions are tuned for this device group.</p>
+            </div>
+            {% else %}
+            <div class="empty-state">Device mix appears after you create placements.</div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Routing View</div>
+                <h2>Most connected placements</h2>
+            </div>
+        </div>
+        <div class="list-stack">
+            {% for placement in busiest_placements %}
+            <div class="list-item inventory-list-item">
+                <div class="inventory-signal-head">
+                    <strong>{{ placement.name }}</strong>
+                    <span>{{ placement.ad_units|length }} linked ad units</span>
+                </div>
+                <div class="pill-stack">
+                    <span class="soft-chip">{{ placement.device_type|title }}</span>
+                    <span class="soft-chip soft-chip-strong">{{ placement.placement_format|title }}</span>
+                    {% for ad_unit in placement.ad_units[:2] %}
+                    <span class="soft-chip">{{ ad_unit.name }}</span>
+                    {% endfor %}
+                    {% if placement.ad_units|length > 2 %}
+                    <span class="muted">+{{ placement.ad_units|length - 2 }} more</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">No placements found.</div>
+            {% endfor %}
+        </div>
+        <div class="inventory-note-grid">
+            {% for placement_format, count in format_breakdown %}
+            <article class="inventory-note-card">
+                <div class="panel-kicker">Format Mix</div>
+                <h3>{{ placement_format }}</h3>
+                <p>{{ count }} placements currently use this format.</p>
+            </article>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
 <section class="panel">
     <div class="panel-header">
-        <h2>Placements</h2>
-        <a class="primary-button" href="{{ url_for('placements.create') }}">Add Placement</a>
+        <div>
+            <div class="panel-kicker">Placement Register</div>
+            <h2>Inventory routing board</h2>
+        </div>
     </div>
-    <div class="table-wrap table-scroll">
+    <div class="table-wrap table-scroll table-dense">
         <table class="data-table">
-            <thead><tr><th>Placement Name</th><th>Linked Ad Units</th><th>Device Type</th><th>Format</th><th>Notes</th><th></th></tr></thead>
+            <thead>
+                <tr>
+                    <th>Placement</th>
+                    <th>Coverage</th>
+                    <th>Device + Format</th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
             <tbody>
                 {% for placement in placements %}
                 <tr>
-                    <td>{{ placement.name }}</td>
-                    <td>{{ placement.ad_units | map(attribute='path') | join(', ') }}</td>
-                    <td>{{ placement.device_type }}</td>
-                    <td>{{ placement.placement_format }}</td>
-                    <td>{{ placement.notes }}</td>
+                    <td>
+                        <div class="inventory-cell">
+                            <strong class="inventory-title">{{ placement.name }}</strong>
+                            <span class="inventory-subtext">{{ placement.ad_units|length }} ad units bundled</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if placement.ad_units %}
+                        <div class="pill-stack">
+                            {% for ad_unit in placement.ad_units[:3] %}
+                            <span class="soft-chip">{{ ad_unit.path }}</span>
+                            {% endfor %}
+                            {% if placement.ad_units|length > 3 %}
+                            <span class="muted">+{{ placement.ad_units|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="muted">No ad units linked yet.</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="pill-stack">
+                            <span class="soft-chip">{{ placement.device_type|title }}</span>
+                            <span class="soft-chip soft-chip-strong">{{ placement.placement_format|title }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if placement.notes %}
+                        <span class="inventory-subtext">{{ placement.notes }}</span>
+                        {% else %}
+                        <span class="muted">No internal notes added.</span>
+                        {% endif %}
+                    </td>
                     <td class="row-actions">
                         <a href="{{ url_for('placements.edit', placement_id=placement.id) }}">Edit</a>
-                        <form method="post" action="{{ url_for('placements.delete', placement_id=placement.id) }}"><button type="submit" class="danger-link">Delete</button></form>
+                        <form method="post" action="{{ url_for('placements.delete', placement_id=placement.id) }}">
+                            <button type="submit" class="danger-link">Delete</button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" class="empty-state">No placements found.</td></tr>
+                <tr><td colspan="5" class="empty-state">No placements found.</td></tr>
                 {% endfor %}
             </tbody>
         </table>

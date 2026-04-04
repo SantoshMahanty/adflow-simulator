@@ -1,0 +1,49 @@
+{% extends "publisher/base.html" %}
+
+{% block publisher_content %}
+<section class="publisher-hero">
+    <div class="publisher-hero-copy">
+        <div class="page-intro-kicker">Mock Publisher Website</div>
+        <h1>Live delivery testing for homepage inventory</h1>
+        <p>Use this embedded publisher surface to confirm that active orders, line items, creatives, and targeting rules serve into real slot requests from the same project.</p>
+    </div>
+    <div class="publisher-hero-metrics">
+        <span class="soft-chip soft-chip-strong">Slots load from `/publisher/ad`</span>
+        <span class="soft-chip">Impressions fire on visibility</span>
+        <span class="soft-chip">Clicks route through `/track/click`</span>
+    </div>
+</section>
+
+{% for slot in slots if slot.position == 'top' %}
+{% include "publisher/partials/slot.html" %}
+{% endfor %}
+
+<section class="publisher-content-grid">
+    <div class="publisher-story-feed">
+        {% for article in articles %}
+        <article class="publisher-story-card">
+            <div class="panel-kicker">{{ article.category|title }}</div>
+            <h2><a href="{{ url_for('publisher.article', article_id=article.id) }}">{{ article.title }}</a></h2>
+            <p>{{ article.summary }}</p>
+            <a class="secondary-button" href="{{ url_for('publisher.article', article_id=article.id) }}">Read Story</a>
+        </article>
+        {% endfor %}
+    </div>
+    <aside class="publisher-rail">
+        {% for slot in slots if slot.position == 'sidebar' %}
+        {% include "publisher/partials/slot.html" %}
+        {% endfor %}
+        <section class="publisher-module">
+            <div class="panel-kicker">Why this matters</div>
+            <h3>One project, two surfaces</h3>
+            <p>The same advertiser, order, line item, creative, and targeting records created in admin power the live ad response here.</p>
+        </section>
+    </aside>
+</section>
+
+<section class="publisher-footer-slots">
+    {% for slot in slots if slot.position in ['footer', 'anchor'] %}
+    {% include "publisher/partials/slot.html" %}
+    {% endfor %}
+</section>
+{% endblock %}

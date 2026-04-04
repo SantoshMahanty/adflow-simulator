@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_chip %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Delivery Diagnostics</div>
+            <h2>Auction Request Log</h2>
+        </div>
+    </div>
+    <div class="table-wrap table-scroll">
+        <table class="data-table compact">
+            <thead>
+                <tr>
+                    <th>Request</th>
+                    <th>Ad Unit</th>
+                    <th>Page</th>
+                    <th>Device</th>
+                    <th>Winner</th>
+                    <th>Creative</th>
+                    <th>Status</th>
+                    <th>Impression</th>
+                    <th>Click</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ad_request in ad_requests %}
+                <tr>
+                    <td><a href="{{ url_for('auctions.detail', request_id=ad_request.request_id) }}">{{ ad_request.request_id[:12] }}</a></td>
+                    <td>{{ ad_request.ad_unit.path if ad_request.ad_unit else ad_request.ad_unit_code }}</td>
+                    <td>{{ ad_request.page_type or 'unknown' }}</td>
+                    <td>{{ ad_request.device_type or 'unknown' }}</td>
+                    <td>{{ ad_request.winning_line_item.name if ad_request.winning_line_item else 'House / Empty' }}</td>
+                    <td>{{ ad_request.winning_creative.name if ad_request.winning_creative else '-' }}</td>
+                    <td>{{ status_chip(ad_request.result.status if ad_request.result else 'pending') }}</td>
+                    <td>{{ 'Yes' if ad_request.impression_logged else 'No' }}</td>
+                    <td>{{ 'Yes' if ad_request.click_logged else 'No' }}</td>
+                    <td>{{ ad_request.created_at.strftime('%d %b %Y %H:%M') }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="10" class="empty-state">No auction requests have been logged yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

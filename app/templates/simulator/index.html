@@ -32,6 +32,8 @@
         <label><span>Creative Size</span><input type="text" name="creative_size" value="{{ request_context.creative_size if request_context else '' }}" placeholder="728x90" required></label>
         <label><span>Time / Date</span><input type="datetime-local" name="request_time" value="{{ request_context.time if request_context else '' }}"></label>
         <label><span>Content Category</span><input type="text" name="content_category" value="{{ request_context.content_category if request_context else '' }}" placeholder="sports"></label>
+        <label><span>Page Type</span><input type="text" name="page_type" value="{{ request_context.page_type if request_context else '' }}" placeholder="home"></label>
+        <label><span>Slot Position</span><input type="text" name="slot_position" value="{{ request_context.slot_position if request_context else '' }}" placeholder="top"></label>
         <label class="full-span"><span>Key Values</span><textarea name="key_values" rows="4" placeholder="geo=delhi&#10;device=desktop&#10;content_category=sports">{% if request_context and request_context.key_values %}{% for key, value in request_context.key_values.items() %}{{ key }}={{ value }}
 {% endfor %}{% endif %}</textarea></label>
         <div class="form-actions">

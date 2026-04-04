@@ -5,6 +5,8 @@ from config import DevelopmentConfig
 from .models import User, db
 from .routes.ad_units import ad_units_bp
 from .routes.advertisers import advertisers_bp
+from .routes.api import api_bp
+from .routes.auctions import auctions_bp
 from .routes.auth import auth_bp
 from .routes.creatives import creatives_bp
 from .routes.dashboard import dashboard_bp
@@ -12,14 +14,21 @@ from .routes.key_values import key_values_bp
 from .routes.line_items import line_items_bp
 from .routes.orders import orders_bp
 from .routes.placements import placements_bp
+from .routes.publisher import publisher_bp
 from .routes.reports import reports_bp
 from .routes.simulator import simulator_bp
 from .routes.troubleshooting import troubleshooting_bp
+from .services import ensure_runtime_schema
+from .services.ad_server import bootstrap_mock_publisher_inventory
 
 
 def create_app(config_object=DevelopmentConfig):
     app = Flask(__name__)
-    app.config.from_object(config_object)
+    if isinstance(config_object, dict):
+        app.config.from_mapping(config_object)
+    else:
+        app.config.from_object(config_object)
+    app.config.setdefault("RUN_STARTUP_BOOTSTRAP", True)
 
     db.init_app(app)
 
@@ -36,20 +45,31 @@ def create_app(config_object=DevelopmentConfig):
     def init_db_command():
         with app.app_context():
             db.create_all()
+            ensure_runtime_schema()
+            bootstrap_mock_publisher_inventory()
             print("Database tables created.")
+
+    if app.config.get("RUN_STARTUP_BOOTSTRAP", True):
+        with app.app_context():
+            db.create_all()
+            ensure_runtime_schema()
+            bootstrap_mock_publisher_inventory()
 
     return app
 
 
 def register_blueprints(app):
     app.register_blueprint(auth_bp)
+    app.register_blueprint(api_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(advertisers_bp)
     app.register_blueprint(orders_bp)
     app.register_blueprint(line_items_bp)
     app.register_blueprint(creatives_bp)
     app.register_blueprint(ad_units_bp)
+    app.register_blueprint(auctions_bp)
     app.register_blueprint(placements_bp)
+    app.register_blueprint(publisher_bp)
     app.register_blueprint(key_values_bp)
     app.register_blueprint(simulator_bp)
     app.register_blueprint(troubleshooting_bp)
@@ -74,6 +94,15 @@ def register_context(app):
             },
             {"label": "Targeting", "children": [{"label": "Key Values", "endpoint": "key_values.index"}]},
             {"label": "Simulators", "children": [{"label": "Auction", "endpoint": "simulator.index"}]},
+            {
+                "label": "Publisher",
+                "children": [
+                    {"label": "Publisher Home", "endpoint": "publisher.home"},
+                    {"label": "Auction Test Page", "endpoint": "publisher.test_auction"},
+                    {"label": "Category Page", "endpoint": "publisher.category", "kwargs": {"category_slug": "technology"}},
+                ],
+            },
+            {"label": "Auction Logs", "endpoint": "auctions.index"},
             {
                 "label": "Troubleshooting",
                 "children": [

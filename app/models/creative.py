@@ -17,6 +17,7 @@ class Creative(db.Model):
     size = db.Column(db.String(30), nullable=False)
     destination_url = db.Column(db.String(255))
     approval_status = db.Column(db.String(50), nullable=False, default="pending")
+    asset_url = db.Column(db.String(255))
     tag_snippet = db.Column(db.Text)
     preview_text = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, nullable=False, default=True)

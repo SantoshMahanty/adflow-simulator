@@ -12,11 +12,11 @@
             <div class="nav-group">
                 <div class="nav-group-title">{{ section.label }}</div>
                 {% for child in section.children %}
-                <a class="nav-link {% if request.endpoint == child.endpoint %}active{% endif %}" data-short="{{ child.label[:2]|upper }}" title="{{ child.label }}" href="{{ url_for(child.endpoint) }}">{{ child.label }}</a>
+                <a class="nav-link {% if request.endpoint == child.endpoint %}active{% endif %}" data-short="{{ child.label[:2]|upper }}" title="{{ child.label }}" href="{{ url_for(child.endpoint, **(child.kwargs or {})) }}">{{ child.label }}</a>
                 {% endfor %}
             </div>
             {% else %}
-            <a class="nav-link {% if request.endpoint == section.endpoint %}active{% endif %}" data-short="{{ section.label[:2]|upper }}" title="{{ section.label }}" href="{{ url_for(section.endpoint) }}">{{ section.label }}</a>
+            <a class="nav-link {% if request.endpoint == section.endpoint %}active{% endif %}" data-short="{{ section.label[:2]|upper }}" title="{{ section.label }}" href="{{ url_for(section.endpoint, **(section.kwargs or {})) }}">{{ section.label }}</a>
             {% endif %}
         {% endfor %}
     </nav>

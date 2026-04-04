@@ -3,47 +3,179 @@
 
 {% macro tree(nodes, depth=0) -%}
     {% for node in nodes %}
-    <div class="tree-node" style="margin-left: {{ depth * 16 }}px">
-        <span class="tree-path">{{ node.path }}</span>
-        <span class="muted">{{ node.size_support }} | {{ node.environment }}</span>
+    <div class="tree-node inventory-tree-node" style="margin-left: {{ depth * 16 }}px">
+        <div class="inventory-tree-head">
+            <span class="tree-path">{{ node.path }}</span>
+            {{ status_chip('active' if node.is_active else 'paused') }}
+        </div>
+        <div class="inventory-tree-meta">
+            <span class="soft-chip soft-chip-strong">{{ node.size_support }}</span>
+            <span class="soft-chip">{{ node.environment|title }}</span>
+            <span class="muted">{{ node.placements|length }} placements linked</span>
+        </div>
     </div>
     {{ tree(node.children, depth + 1) }}
     {% endfor %}
 {%- endmacro %}
 
+{% set cards = [
+    {'label': 'Ad Units', 'value': inventory_stats.total_units},
+    {'label': 'Active Units', 'value': inventory_stats.active_units},
+    {'label': 'Root Nodes', 'value': inventory_stats.root_units},
+    {'label': 'Placement Links', 'value': inventory_stats.placement_links}
+] %}
+
 {% block content %}
+<section class="page-intro inventory-hero">
+    <div>
+        <div class="page-intro-kicker">Inventory Workspace</div>
+        <h2>Shape the ad unit map like a live supply tree</h2>
+        <p>Track hierarchy, size support, and placement readiness from one cleaner inventory surface tuned for ad operations setup work.</p>
+    </div>
+    <div class="page-intro-meta">
+        <span class="metric-pill healthy">{{ inventory_stats.linked_units }} units mapped to placements</span>
+        <span class="metric-pill neutral">{{ inventory_stats.environment_count }} environments</span>
+    </div>
+</section>
+
+{% include "partials/stat_cards.html" %}
+
 <section class="panel-row">
-    <article class="panel">
+    <article class="panel hero-panel">
         <div class="panel-header">
-            <h2>Hierarchy</h2>
+            <div>
+                <div class="panel-kicker">Hierarchy Map</div>
+                <h2>Inventory tree and size coverage</h2>
+            </div>
             <a class="primary-button" href="{{ url_for('ad_units.create') }}">Add Ad Unit</a>
         </div>
-        <div class="tree-wrap">{{ tree(parent_tree) }}</div>
-    </article>
-    <article class="panel">
-        <div class="panel-header"><h2>Ad Unit Inventory</h2></div>
-        <div class="table-wrap">
-            <table class="data-table compact">
-                <thead><tr><th>Name</th><th>Path</th><th>Size Support</th><th>Environment</th><th>Status</th><th></th></tr></thead>
-                <tbody>
-                    {% for ad_unit in ad_units %}
-                    <tr>
-                        <td>{{ ad_unit.name }}</td>
-                        <td>{{ ad_unit.path }}</td>
-                        <td>{{ ad_unit.size_support }}</td>
-                        <td>{{ ad_unit.environment }}</td>
-                        <td>{{ status_chip('active' if ad_unit.is_active else 'paused') }}</td>
-                        <td class="row-actions">
-                            <a href="{{ url_for('ad_units.edit', ad_unit_id=ad_unit.id) }}">Edit</a>
-                            <form method="post" action="{{ url_for('ad_units.delete', ad_unit_id=ad_unit.id) }}"><button type="submit" class="danger-link">Delete</button></form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="6" class="empty-state">No ad units found.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="inventory-mini-grid">
+            <div class="inventory-mini-card">
+                <div class="inventory-mini-label">Serving Readiness</div>
+                <div class="inventory-mini-value">{{ inventory_stats.active_rate }}% active</div>
+                <p>{{ inventory_stats.active_units }} of {{ inventory_stats.total_units }} configured units are ready to serve.</p>
+            </div>
+            <div class="inventory-mini-card">
+                <div class="inventory-mini-label">Hierarchy Depth</div>
+                <div class="inventory-mini-value">{{ inventory_stats.root_units }} root nodes</div>
+                <p>Top-level units anchor the site tree and inherited structure for child inventory.</p>
+            </div>
+        </div>
+        <div class="tree-wrap inventory-tree-wrap">
+            {% if parent_tree %}
+                {{ tree(parent_tree) }}
+            {% else %}
+                <div class="empty-state">No ad units found.</div>
+            {% endif %}
         </div>
     </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-kicker">Inventory Signals</div>
+                <h2>Where supply is concentrated</h2>
+            </div>
+        </div>
+        <div class="inventory-stack">
+            {% for environment, count in top_environments %}
+            {% set environment_share = ((count / inventory_stats.total_units) * 100) if inventory_stats.total_units else 0 %}
+            <div class="inventory-signal-card">
+                <div class="inventory-signal-head">
+                    <strong>{{ environment }}</strong>
+                    <span>{{ count }} units</span>
+                </div>
+                <div class="inventory-progress"><span style="width: {{ environment_share }}%"></span></div>
+                <p>{{ environment_share|round(0)|int }}% of the current ad unit footprint lives in this environment.</p>
+            </div>
+            {% else %}
+            <div class="empty-state">Environment distribution appears after you create ad units.</div>
+            {% endfor %}
+        </div>
+        <div class="inventory-note-grid">
+            {% for size, count in top_sizes %}
+            <article class="inventory-note-card">
+                <div class="panel-kicker">Size Profile</div>
+                <h3>{{ size }}</h3>
+                <p>{{ count }} ad units use this size support bundle.</p>
+            </article>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <div class="panel-kicker">Inventory Register</div>
+            <h2>Ad unit operations board</h2>
+        </div>
+    </div>
+    <div class="table-wrap table-scroll table-dense">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Ad Unit</th>
+                    <th>Supply Profile</th>
+                    <th>Placement Coverage</th>
+                    <th>Environment</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ad_unit in ad_units %}
+                <tr>
+                    <td>
+                        <div class="inventory-cell">
+                            <strong class="inventory-title">{{ ad_unit.name }}</strong>
+                            <span class="inventory-subtext code-cell">{{ ad_unit.path }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="pill-stack">
+                            <span class="soft-chip soft-chip-strong">{{ ad_unit.size_support }}</span>
+                            <span class="soft-chip">
+                                {% if ad_unit.parent %}
+                                Child of {{ ad_unit.parent.name }}
+                                {% else %}
+                                Root node
+                                {% endif %}
+                            </span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if ad_unit.placements %}
+                        <div class="inventory-cell">
+                            <span class="soft-chip soft-chip-success">{{ ad_unit.placements|length }} linked placements</span>
+                            <div class="pill-stack">
+                                {% for placement in ad_unit.placements[:2] %}
+                                <span class="soft-chip">{{ placement.name }}</span>
+                                {% endfor %}
+                                {% if ad_unit.placements|length > 2 %}
+                                <span class="muted">+{{ ad_unit.placements|length - 2 }} more</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="muted">Not attached to a placement yet.</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="soft-chip">{{ ad_unit.environment|title }}</span></td>
+                    <td>{{ status_chip('active' if ad_unit.is_active else 'paused') }}</td>
+                    <td class="row-actions">
+                        <a href="{{ url_for('publisher.preview_slot', slot_id=ad_unit.path) }}">Open Test Page</a>
+                        <a href="{{ url_for('ad_units.edit', ad_unit_id=ad_unit.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('ad_units.delete', ad_unit_id=ad_unit.id) }}">
+                            <button type="submit" class="danger-link">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="empty-state">No ad units found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endblock %}

@@ -5,7 +5,7 @@ from ..services import log_activity, login_required
 from ..services.helpers import parse_int
 
 
-CREATIVE_FORMATS = ["display", "video", "native", "ctv"]
+CREATIVE_FORMATS = ["display", "image", "html", "third_party_tag", "native", "video", "ctv"]
 CREATIVE_STATUSES = ["approved", "pending", "rejected", "broken"]
 
 
@@ -102,6 +102,7 @@ def populate_creative(creative, form):
     creative.size = form.get("size", "").strip()
     creative.destination_url = form.get("destination_url", "").strip()
     creative.approval_status = form.get("approval_status", "pending")
+    creative.asset_url = form.get("asset_url", "").strip()
     creative.tag_snippet = form.get("tag_snippet", "").strip()
     creative.preview_text = form.get("preview_text", "").strip()
     creative.is_active = form.get("is_active") == "on"
@@ -110,5 +111,12 @@ def populate_creative(creative, form):
 def validate_creative(creative):
     if not creative.name or not creative.line_item_id or not creative.size:
         flash("Creative name, linked line item, and size are required.", "error")
+        return False
+    creative_format = (creative.creative_format or "").lower()
+    if creative_format in {"html", "third_party_tag", "video"} and not creative.tag_snippet:
+        flash("HTML, third-party, and video creatives need markup or a tag snippet.", "error")
+        return False
+    if creative_format in {"image", "display", "native"} and not (creative.preview_text or creative.asset_url):
+        flash("Image-style creatives need preview text or an asset URL so they can render.", "error")
         return False
     return True

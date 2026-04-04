@@ -1,0 +1,26 @@
+{% extends "publisher/base.html" %}
+
+{% block publisher_content %}
+<section class="publisher-hero">
+    <div class="publisher-hero-copy">
+        <div class="page-intro-kicker">Deterministic Auction Fixture</div>
+        <h1>Single-slot winner-only rendering test</h1>
+        <p>This page isolates one ad request path so you can confirm that exactly five live line items are evaluated, one winner is chosen, and only that winning creative renders.</p>
+    </div>
+    <div class="publisher-hero-metrics">
+        <span class="soft-chip soft-chip-strong">Slot {{ test_summary.slot_id }}</span>
+        <span class="soft-chip">{{ test_summary.expected_candidates }} candidates</span>
+        <span class="soft-chip">Admin diagnostics linked per request</span>
+    </div>
+</section>
+
+<section class="publisher-module">
+    <div class="panel-kicker">Expected Outcome</div>
+    <h2>Live auction verification</h2>
+    <p>{{ test_summary.expected_behavior }}</p>
+</section>
+
+{% for slot in slots %}
+{% include "publisher/partials/slot.html" %}
+{% endfor %}
+{% endblock %}
